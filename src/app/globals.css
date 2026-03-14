@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Light / Dark tokens (tailwind inline theme) */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -19,8 +20,134 @@
   }
 }
 
+/* Base body for tailwind palette (kept) */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom dark theme for the app */
+:root {
+  color-scheme: dark;
+  --bg: #0e1116;
+  --card: #161b22;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e6edf3;
+  --muted: #9ea7b3;
+  --primary: #4ea1ff;
+  --primary-strong: #2f82e4;
+  --error-bg: rgba(255, 99, 99, 0.1);
+  --error-border: rgba(255, 99, 99, 0.4);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 20% 20%, rgba(78,161,255,0.06), transparent 35%),
+              radial-gradient(circle at 80% 0%, rgba(78,161,255,0.04), transparent 30%),
+              var(--bg);
+  color: var(--text);
+}
+
+main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #0f141b;
+  color: var(--text);
+  resize: vertical;
+}
+
+button.primary {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--primary);
+  color: #0b1024;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+button.primary:hover:not(:disabled) {
+  background: var(--primary-strong);
+  box-shadow: 0 8px 24px rgba(78,161,255,0.25);
+  transform: translateY(-1px);
+}
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.helper {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.error-box {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: #ff9c9c;
+}
+
+.response-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #0f141b;
+}
+
+/* Markdown spacing and hierarchy */
+.md-body {
+  line-height: 1.28;
+}
+
+.md-heading {
+  margin: 6px 0 2px;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.md-p {
+  margin: 1px 0 3px;
+  line-height: 1.22;
+}
+
+.md-li {
+  margin: 1px 0;
+  line-height: 1.2;
+}
+
+.md-body ul,
+.md-body ol {
+  padding-left: 18px;
+  margin: 3px 0 3px;
+}
+
+/* Tips list */
+.tips-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #cde2ff;
+  line-height: 1.3;
+}
+.tips-list li { margin: 2px 0; }
