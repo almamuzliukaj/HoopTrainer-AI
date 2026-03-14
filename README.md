@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HoopTrainer AI
 
-## Getting Started
+Basketball-specific training plan generator with on-court drills + athletic development. Built with Next.js (App Router) and Groq (OpenAI-compatible) chat completions.
 
-First, run the development server:
+## Features
+- ✏️ Prompt form with validation
+- 🔄 Loading state (button disabled) + clear previous results per request
+- 🛡️ Error handling for API and empty input
+- 🧠 Groq-backed API (`/api/generate`) with HoopTrainer system prompt (skill + athletic)
+- 📝 Markdown rendering for clean Day 1–3 plans (compact spacing)
+- 💡 Additional Tips section (always shown under plans)
+- 🎨 Dark theme styling (`globals.css`)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project Structure
+```
+src/
+  app/
+    page.tsx           # UI form + Markdown rendering
+    api/
+      generate/
+        route.ts       # Groq chat completion endpoint
+    layout.tsx
+  lib/
+    supabaseClient.ts  # (optional helper)
+.env.local             # API keys (not committed)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
+- Node 18+
+- Groq API key
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup
+1. Install deps
+   ```bash
+   npm install
+   ```
+2. Create `.env.local`
+   ```bash
+   GROQ_API_KEY=your_key_here
+   GROQ_API_BASE=https://api.groq.com/openai/v1
+   ```
+3. Run dev server
+   ```bash
+   npm run dev
+   ```
+   Open http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Usage
+1. Write a prompt (e.g., “3-day plan for a guard, goal: explosiveness and speed, intermediate, age 20”).
+2. Click **Generate Plan**.
+3. During loading, the button is disabled; previous result/error is cleared.
+4. View the Markdown-formatted plan (Day headings bold/larger) plus “Additional Tips”.
 
-## Learn More
+## Scripts
+- `npm run dev` – start dev server
+- `npm run build` – production build
+- `npm start` – run production build
+- `npm run lint` – lint
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment
+- Any Next.js-compatible host (Vercel recommended).  
+- Ensure `.env` variables are set in hosting dashboard.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notes
+- `.env.local` is gitignored; never commit secrets.
+- If you change the API path, update the fetch URL in `page.tsx`.
+- Markdown spacing/headings can be tuned via `globals.css` (`.md-heading`, `.md-p`, `.md-li`).
