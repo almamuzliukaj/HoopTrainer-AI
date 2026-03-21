@@ -27,11 +27,11 @@ export default function Page() {
             style={{
               borderRadius: 12,
               padding: "12px 14px",
-              background: "linear-gradient(135deg, var(--accent), #365fd6)",
-              color: "#0b1020",
+              background: "linear-gradient(135deg, var(--accent), #3c7be0)",
+              color: "#0f1524",
               fontWeight: 700,
               textAlign: "center",
-              boxShadow: "0 10px 24px rgba(54,95,214,0.3)",
+              boxShadow: "0 10px 24px rgba(60,123,224,0.30)",
               display: "inline-block",
             }}
           >
@@ -43,11 +43,11 @@ export default function Page() {
             style={{
               borderRadius: 12,
               padding: "12px 14px",
-              background: "linear-gradient(135deg, var(--accent-2), #52c7ff)",
-              color: "#0b1020",
+              background: "linear-gradient(135deg, var(--accent-2), #4fc9bd)",
+              color: "#0f1524",
               fontWeight: 700,
               textAlign: "center",
-              boxShadow: "0 10px 24px rgba(82,199,255,0.28)",
+              boxShadow: "0 10px 24px rgba(79,201,189,0.28)",
               display: "inline-block",
             }}
           >
