@@ -18,9 +18,9 @@
 ## 📸 Screenshots
 
 <div align="center">
-  <img src="public/screenshots/screenshot.png" alt="HoopTrainer AI - Plan Generator" width="700"/>
+  <img src="public/screenshots/screenshot.png" alt="HoopTrainer AI - Plan Generator" width="400"/>
   <br/><br/>
-  <img src="public/screenshots/screenshot2.png" alt="HoopTrainer AI - Day 2/3 and Tips" width="700"/>
+  <img src="public/screenshots/screenshot2.png" alt="HoopTrainer AI - Day 2/3 and Tips" width="400"/>
 </div>
 
 ---
