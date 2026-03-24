@@ -25,11 +25,16 @@ export default function SignupPage() {
   return (
     <div className="bg-ball-left" style={{ minHeight: "100vh", alignItems: "center" }}>
       <main style={{ width: "min(520px, 94vw)", display: "flex", justifyContent: "center" }}>
-        <div className="auth-card" style={{ padding: "30px 30px 32px", width: "100%" }}>
-          <h1 style={{ marginBottom: 8, fontSize: 28, letterSpacing: 0.2 }}>Create account</h1>
+        <div className="auth-card" style={{ padding: "32px 32px 34px", width: "100%" }}>
+          {/* Home link only here */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <Link href="/" className="helper" style={{ fontWeight: 700, padding: "6px 10px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>← Home</Link>
+          </div>
+
+          <h1 style={{ marginBottom: 10, fontSize: 30, letterSpacing: 0.3 }}>Create account</h1>
           <p className="helper" style={{ marginTop: 0 }}>Join HoopTrainer AI to generate your plans.</p>
 
-          <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
+          <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
             <div>
               <label className="helper">Email</label>
               <input
@@ -51,14 +56,18 @@ export default function SignupPage() {
               />
             </div>
             {error && <div className="error-box">Error: {error}</div>}
-            <button type="submit" disabled={loading || !email || !password}>
+            <button
+              type="submit"
+              disabled={loading || !email || !password}
+              style={{ padding: "12px 16px", borderRadius: 12, background: "linear-gradient(135deg, var(--accent-2), #4fc9bd)", color: "#0f1524", fontWeight: 800, border: "1px solid rgba(79,201,189,0.55)", boxShadow: "0 12px 26px rgba(79,201,189,0.30)" }}
+            >
               {loading ? "Creating..." : "Sign up"}
             </button>
           </form>
 
-          <div className="auth-actions" style={{ marginTop: 16 }}>
+          <div className="auth-actions" style={{ marginTop: 18 }}>
             <span className="auth-switch">Already have an account?</span>
-            <Link href="/login" style={{ color: "var(--accent)" }}>Login</Link>
+            <Link href="/login" style={{ color: "var(--accent)", fontWeight: 700 }}>Login</Link>
           </div>
         </div>
       </main>

@@ -18,6 +18,12 @@ export default function Dashboard() {
   const router = useRouter();
   const [snippetIndex, setSnippetIndex] = useState(0);
 
+  const [sleep, setSleep] = useState(7);
+  const [soreness, setSoreness] = useState(3);
+  const [energy, setEnergy] = useState(7);
+  const [note, setNote] = useState("");
+  const [savedMsg, setSavedMsg] = useState("");
+
   useEffect(() => {
     const pickNew = () => {
       setSnippetIndex((prev) => {
@@ -35,6 +41,12 @@ export default function Dashboard() {
     router.replace("/login");
   };
 
+  const handleSave = () => {
+    // TODO: wire to Supabase later
+    setSavedMsg("Check-in saved locally. (Hook this up to Supabase to persist.)");
+    setTimeout(() => setSavedMsg(""), 2600);
+  };
+
   const focus = {
     session: "Strength",
     cue: "Focus: hip hinge depth — 3×8 RDL with 2–3 sec eccentric",
@@ -47,13 +59,17 @@ export default function Dashboard() {
     <Protected>
       <div className="bg-ball-left">
         <main style={{ width: "min(1120px, 96vw)", display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Top bar */}
+          <nav style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", padding: "14px 0 6px" }}>
+            <button onClick={logout} style={{ width: 120 }}>Logout</button>
+          </nav>
+
           <header style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
             <div>
               <p className="helper" style={{ margin: 0 }}>HoopTrainer AI</p>
               <h1 style={{ margin: "4px 0 6px", fontSize: 26 }}>Dashboard</h1>
               <p className="helper" style={{ margin: 0 }}>You’re signed in. Choose your next action.</p>
             </div>
-            <button onClick={logout} style={{ width: 120 }}>Logout</button>
           </header>
 
           <div
@@ -98,6 +114,41 @@ export default function Dashboard() {
               <p className="helper" style={{ margin: 0, color: "var(--text)" }}>
                 {current.tip}
               </p>
+            </div>
+
+            {/* New Readiness Check-in */}
+            <div className="panel" style={{ display: "grid", gap: 10 }}>
+              <strong style={{ fontSize: 17 }}>Daily Readiness Check</strong>
+              <label className="helper" style={{ display: "grid", gap: 6 }}>
+                Sleep (1–10)
+                <input type="range" min={1} max={10} value={sleep} onChange={(e) => setSleep(Number(e.target.value))} />
+                <span className="helper">Current: {sleep}/10</span>
+              </label>
+
+              <label className="helper" style={{ display: "grid", gap: 6 }}>
+                Soreness (1–10)
+                <input type="range" min={1} max={10} value={soreness} onChange={(e) => setSoreness(Number(e.target.value))} />
+                <span className="helper">Current: {soreness}/10</span>
+              </label>
+
+              <label className="helper" style={{ display: "grid", gap: 6 }}>
+                Energy (1–10)
+                <input type="range" min={1} max={10} value={energy} onChange={(e) => setEnergy(Number(e.target.value))} />
+                <span className="helper">Current: {energy}/10</span>
+              </label>
+
+              <label className="helper" style={{ display: "grid", gap: 6 }}>
+                Note (optional)
+                <textarea
+                  rows={3}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Knees a bit tight; lower body volume ok, but skip max jumps."
+                />
+              </label>
+
+              <button onClick={handleSave}>Save check-in</button>
+              {savedMsg && <span className="helper" style={{ color: "var(--accent)" }}>{savedMsg}</span>}
             </div>
           </div>
         </main>
