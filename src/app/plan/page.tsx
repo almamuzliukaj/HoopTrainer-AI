@@ -1,215 +1,290 @@
 "use client";
 
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-
-function formatPlan(raw: string) {
-  let s = raw.trim().replace(/\r\n/g, "\n");
-  s = s.replace(/^##\s*Plan\s*\n*/i, "");
-  s = s.replace(/^(plan:?)(\s*)$/gim, "").trim();
-  s = s.replace(/^\s*[•·]\s*/gm, "");
-  s = s.replace(/^(day\s*\d+[^\n]*):?/gim, (_, d) => `## ${d}`);
-  s = s.replace(/^\s*(warm-?up|main\s*workout|strength|plyo|conditioning|finisher|cool[-\s]?down):?/gim, (_, h) => `### ${h}`);
-  s = s.replace(/(## [^\n]+)\n(?!\n)/g, "$1\n\n");
-  s = s.replace(/(### [^\n]+)\n(?!\n)/g, "$1\n\n");
-  s = s.replace(/\n{3,}/g, "\n\n");
-  s = s.replace(
-    /^(?!(?:##|###))\s*(\d+x[^\n]*|\d+\s?(?:sets?|reps?)[^\n]*|set\s*\d+[^\n]*|rep\s*\d+[^\n]*|tempo\s*\d+[^\n]*|rest\s*\d+[^\n]*|exercise\s*\d*[^\n]*|drill\s*\d*[^\n]*|interval[^\n]*|shooting[^\n]*|layup[^\n]*|sprint[^\n]*|jump[^\n]*)$/gim,
-    "- $1"
-  );
-  s = s.replace(/([^\n])\n(- )/g, "$1\n\n- ");
-  return s.trim();
-}
-
-function parseTips(raw: string): string[] {
-  if (!raw.trim()) return [];
-  let t = raw.trim().replace(/\r\n/g, "\n");
-  t = t.replace(/^##\s*Tips?\s*\n*/i, "");
-  const lines = t
-    .split("\n")
-    .map((line) =>
-      line
-        .trim()
-        .replace(/^[•·\-\*]+\s*/, "") // strip any bullet markers
-    )
-    .filter((line) => line.length);
-  const joined = lines.join("\n").replace(/\n{3,}/g, "\n\n");
-  return joined
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length);
-}
+import { Protected } from "@/components/Protected";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function PlanPage() {
-  const [prompt, setPrompt] = useState("");
+  const router = useRouter();
+
+  // Structured fields (blank for user input)
+  const [position, setPosition] = useState("");
+  const [goal, setGoal] = useState("");
+  const [days, setDays] = useState("");
+  const [level, setLevel] = useState("");
+  const [equipment, setEquipment] = useState("");
+  const [intensity, setIntensity] = useState("");
+  const [age, setAge] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [plan, setPlan] = useState("");
-  const [tips, setTips] = useState<string[]>([]);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setPlan("");
-    setTips([]);
+  // Auto prompt from fields
+  const builtPrompt = useMemo(
+    () =>
+      [
+        days ? `Create a ${days}-day basketball training plan.` : "Create a basketball training plan.",
+        position ? `Position: ${position}.` : "",
+        level ? `Level: ${level}.` : "",
+        goal ? `Goal: ${goal}.` : "",
+        equipment ? `Equipment available: ${equipment}.` : "",
+        intensity ? `Intensity: ${intensity}.` : "",
+        age ? `Age: ${age}.` : "",
+        `Include skill (ball-handling, shooting, footwork) AND athletic work (speed, plyos, strength/conditioning).`,
+        `Format days as: DAY X (short theme) then bullet items with sets/reps/time and short rest guidance.`,
+        notes ? `Extra notes: ${notes}.` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    [days, position, level, goal, equipment, intensity, age, notes]
+  );
 
-    if (!prompt.trim()) return setError("Please enter what you want in the plan.");
+  const navStyle: React.CSSProperties = {
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 16px",
+    marginBottom: 12,
+    borderRadius: 14,
+    background: "rgba(20, 27, 44, 0.78)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    boxShadow: "0 12px 30px rgba(0,0,0,0.35)",
+  };
+
+  const navLink: React.CSSProperties = {
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    color: "var(--text)",
+    fontWeight: 700,
+    textDecoration: "none",
+    boxShadow: "0 8px 18px rgba(0,0,0,0.20)",
+  };
+
+  const signOutBtn: React.CSSProperties = {
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.18)",
+    background: "linear-gradient(135deg, var(--accent-2), #4fc9bd)",
+    color: "#0f1524",
+    fontWeight: 800,
+    boxShadow: "0 10px 22px rgba(79,201,189,0.32)",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  };
+
+  const promptIsTooShort = (text: string) => text.trim().length < 40;
+
+  const extractDays = (text: string) => {
+    const match = text.match(/\b(\d+)\s*-?\s*day/i);
+    const n = match ? parseInt(match[1], 10) : 4;
+    return Math.max(1, Math.min(14, n));
+  };
+
+  const dynamicFallback = (dayCount: number) =>
+    Array.from({ length: dayCount }, (_, i) => {
+      const d = i + 1;
+      return `
+<strong>DAY ${d} (Skill + Athletic)</strong><br/>
+- Ball-Handling: 3×40s combos, rest 30s<br/>
+- Shooting: 60–80 makes (spot + pull-up mix)<br/>
+- Footwork: closeouts/stance 3×10<br/>
+- Plyo/Speed: bounds or short sprints 4–6 sets<br/>
+- Strength: 2–3 lifts (hinge/squat/push/pull), 3–4×6–10<br/>
+- Conditioning: 6×30/30 court or bike<br/><br/>`;
+    }).join("\n");
+
+  // Nicely format AI text
+  const formatResponse = (text: string) => {
+    let html = text.trim().replace(/\r\n/g, "\n");
+    html = html.replace(/^(\s*DAY\s+\d+[^\n]*)$/gim, "<strong>$1</strong>");
+    html = html.replace(/^Additional Tips:?$/gim, "<strong>Additional Tips</strong>");
+    html = html.replace(/\n{2,}/g, "<br/><br/>").replace(/\n/g, "<br/>");
+    return html;
+  };
+
+  const generatePlan = async () => {
+    const finalPrompt = builtPrompt.trim();
+
+    if (promptIsTooShort(finalPrompt)) {
+      setError("Please add more detail (goal, days/week, position, level, equipment, constraints).");
+      setOutput(null);
+      return;
+    }
 
     setLoading(true);
+    setError(null);
+    setOutput(null);
+
     try {
-      const fullPrompt = `${prompt}
-
-Return TWO sections in Markdown:
-## Plan
-- Use headings for each day (Day 1, Day 2, etc.) and bullets for exercises/sets/reps.
-## Tips
-- Give 5-7 short, specific tips tailored to this athlete and request.`;
-
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: fullPrompt }),
+        body: JSON.stringify({ prompt: finalPrompt }),
       });
-      const data = await res.json();
 
       if (!res.ok) {
-        setError(data?.error || "API request failed. Please try again.");
-        return;
+        const { error: apiError } = await res.json().catch(() => ({ error: "Failed to generate plan" }));
+        throw new Error(apiError || "Failed to generate plan");
       }
 
-      const text = String(data?.text ?? "").trim();
-      const split = text.split(/##\s*Tips?/i);
-      const planPart = split[0] || "";
-      const tipsPart = split[1] || "";
-
-      setPlan(formatPlan(planPart));
-      setTips(parseTips(tipsPart));
-    } catch {
-      setError("Network error. Please check your connection and try again.");
+      const data = await res.json();
+      const rawText = data.text || data.html || "";
+      const html = rawText ? formatResponse(rawText) : "No plan returned from AI.";
+      setOutput(html);
+    } catch (e: unknown) {
+      const fallback = dynamicFallback(extractDays(builtPrompt));
+      setOutput(fallback);
+      setError(e instanceof Error ? e.message : "Using fallback plan because AI call failed.");
     } finally {
       setLoading(false);
     }
   };
 
+  const logout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
+
   return (
-    <main style={{ display: "flex", justifyContent: "center" }}>
-      <section
-        className="card"
-        style={{
-          width: "min(900px, 94vw)",
-          padding: "26px 24px 28px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 18,
-        }}
-      >
-        <header style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-          <div>
-            <p className="helper" style={{ margin: 0 }}>HoopTrainer AI</p>
-            <h1 style={{ margin: "4px 0 6px", fontSize: 28 }}>AI Plan Generator</h1>
-            <p className="helper" style={{ margin: 0 }}>
-              Describe the player, goals, timeframe, and constraints. We’ll craft a tailored plan.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            style={{
-              borderRadius: 12,
-              padding: "10px 14px",
-              border: "1px solid var(--border)",
-              background: "linear-gradient(135deg, var(--accent), #3c7be0)",
-              color: "#0f1524",
-              textDecoration: "none",
-              fontWeight: 700,
-              boxShadow: "0 8px 20px rgba(60,123,224,0.25)",
-            }}
-          >
-            ← Back to Dashboard
-          </Link>
-        </header>
-
-        <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Example: 10-day plan for a small forward to lose weight and improve speed; minimal equipment."
-            disabled={loading}
-            style={{ minHeight: 160, background: "var(--card-2)", lineHeight: 1.5 }}
-          />
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <button type="submit" className="primary" disabled={loading || !prompt.trim()}>
-              {loading ? "Generating..." : "Generate Plan"}
-            </button>
-            {loading && <span className="helper">Hold on, crafting your plan…</span>}
-          </div>
-        </form>
-
-        {error && (
-          <div className="error-box">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
-        {plan && (
-          <section
-            className="card"
-            style={{
-              background: "var(--card-2)",
-              border: `1px solid var(--border)`,
-              padding: "18px 18px 20px",
-            }}
-          >
-            <h2 style={{ marginTop: 0, marginBottom: 10 }}>Plan</h2>
-            <div
-              className="response-box md-body"
-              style={{
-                background: "transparent",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                padding: "14px 14px 6px",
-                lineHeight: 1.6,
-              }}
-            >
-              <ReactMarkdown
-                components={{
-                  h2: (props) => <h2 className="md-heading" {...props} />,
-                  h3: (props) => <h3 className="md-heading" style={{ fontSize: 18 }} {...props} />,
-                  p: (props) => <p className="md-p" {...props} />,
-                  li: (props) => <li className="md-li" style={{ marginBottom: 4 }} {...props} />,
+    <Protected>
+      <div className="bg-ball-left" style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}>
+        <main style={{ width: "min(1120px, 96vw)", margin: "0 auto", padding: "0 0 72px", display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Nav */}
+          <nav style={navStyle}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg, var(--accent), #3c7be0)",
+                  boxShadow: "0 10px 20px rgba(60,123,224,0.35)",
+                  display: "grid",
+                  placeItems: "center",
+                  fontWeight: 900,
+                  color: "#0f1524",
+                  letterSpacing: 0.4,
                 }}
               >
-                {plan}
-              </ReactMarkdown>
+                H
+              </div>
+              <span style={{ fontWeight: 800, letterSpacing: 0.6, fontSize: 17 }}>HoopTrainer AI</span>
             </div>
-          </section>
-        )}
 
-        {tips.length > 0 && (
-          <section
-            className="card"
-            style={{
-              background: "var(--card-2)",
-              border: `1x solid var(--border)`,
-              padding: "16px 18px 18px",
-            }}
-          >
-            <h3 style={{ marginTop: 0, marginBottom: 8 }}>Tips for this plan</h3>
-            <ul
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <Link href="/dashboard" style={navLink}>Dashboard</Link>
+              <button onClick={logout} style={signOutBtn}>Sign out</button>
+            </div>
+          </nav>
+
+          {/* Inputs */}
+          <section className="panel" style={{ padding: "16px 16px", display: "grid", gap: 12 }}>
+            <strong style={{ fontSize: 18 }}>Your request</strong>
+
+            <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+              <label className="helper" style={{ display: "grid", gap: 4 }}>
+                Position
+                <input value={position} onChange={(e) => setPosition(e.target.value)} />
+              </label>
+              <label className="helper" style={{ display: "grid", gap: 4 }}>
+                Days for plan
+                <input value={days} onChange={(e) => setDays(e.target.value)} />
+              </label>
+              <label className="helper" style={{ display: "grid", gap: 4 }}>
+                Level
+                <input value={level} onChange={(e) => setLevel(e.target.value)} />
+              </label>
+              <label className="helper" style={{ display: "grid", gap: 4 }}>
+                Intensity
+                <input value={intensity} onChange={(e) => setIntensity(e.target.value)} />
+              </label>
+              <label className="helper" style={{ display: "grid", gap: 4 }}>
+                Age
+                <input value={age} onChange={(e) => setAge(e.target.value)} />
+              </label>
+            </div>
+
+            <label className="helper" style={{ display: "grid", gap: 4 }}>
+              Main goal
+              <input value={goal} onChange={(e) => setGoal(e.target.value)} />
+            </label>
+
+            <label className="helper" style={{ display: "grid", gap: 4 }}>
+              Equipment available
+              <input value={equipment} onChange={(e) => setEquipment(e.target.value)} />
+            </label>
+
+            <label className="helper" style={{ display: "grid", gap: 4 }}>
+              Extra notes (constraints, injuries, preferences)
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}
+              />
+            </label>
+
+            {promptIsTooShort(builtPrompt) && (
+              <span className="helper" style={{ color: "var(--accent)" }}>
+                Please add more detail (goal, days/week, focus, equipment, notes) for best results.
+              </span>
+            )}
+
+            <button
+              onClick={generatePlan}
+              disabled={loading}
               style={{
-                marginTop: 6,
-                listStyleType: "disc",
-                paddingLeft: 20,
-                lineHeight: 1.55,
+                width: 180,
+                padding: "12px 14px",
+                borderRadius: 10,
+                border: "none",
+                background: loading ? "#94a3b8" : "#3b82f6",
+                color: "#fff",
+                fontWeight: 800,
+                cursor: loading ? "not-allowed" : "pointer",
               }}
             >
-              {tips.map((t, i) => (
-                <li key={i} style={{ marginBottom: 6 }}>{t}</li>
-              ))}
-            </ul>
+              {loading ? "Generating..." : "Generate Plan"}
+            </button>
+
+            {error && (
+              <span className="helper" style={{ color: "var(--accent)" }}>
+                {error}
+              </span>
+            )}
           </section>
-        )}
-      </section>
-    </main>
+
+          {/* Response */}
+          <section className="panel" style={{ padding: "16px 16px", display: "grid", gap: 10 }}>
+            <strong style={{ fontSize: 18 }}>AI Response</strong>
+            {output ? (
+              <div
+                style={{
+                  margin: 0,
+                  lineHeight: 1.55,
+                  fontSize: 15,
+                  whiteSpace: "normal",
+                }}
+                dangerouslySetInnerHTML={{ __html: output }}
+              />
+            ) : (
+              <p className="helper" style={{ margin: 0 }}>
+                Your plan will appear here after you generate it.
+              </p>
+            )}
+          </section>
+        </main>
+      </div>
+    </Protected>
   );
 }

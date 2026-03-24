@@ -15,6 +15,10 @@ export default function LoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
@@ -26,7 +30,6 @@ export default function LoginPage() {
     <div className="bg-ball-left" style={{ minHeight: "100vh", alignItems: "center" }}>
       <main style={{ width: "min(520px, 94vw)", display: "flex", justifyContent: "center" }}>
         <div className="auth-card" style={{ padding: "32px 32px 34px", width: "100%" }}>
-          {/* Home link only here */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <Link href="/" className="helper" style={{ fontWeight: 700, padding: "6px 10px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>← Home</Link>
           </div>
@@ -46,10 +49,11 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="helper">Password</label>
+              <label className="helper">Password (min 6 chars)</label>
               <input
                 type="password"
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -58,7 +62,7 @@ export default function LoginPage() {
             {error && <div className="error-box">Error: {error}</div>}
             <button
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={loading || !email || !password || password.length < 6}
               style={{ padding: "12px 16px", borderRadius: 12, background: "linear-gradient(135deg, var(--accent), #3c7be0)", color: "#0f1524", fontWeight: 800, border: "none", boxShadow: "0 12px 26px rgba(60,123,224,0.30)" }}
             >
               {loading ? "Signing in..." : "Login"}

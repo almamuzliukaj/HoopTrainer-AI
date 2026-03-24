@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const client = new OpenAI({
@@ -25,14 +25,38 @@ Rules:
 7) If goal is speed/first step: include starts, lateral-to-sprint, resisted or overspeed where appropriate.
 8) If user asks for position (guard/wing/big), adapt drills accordingly (guard = more handle/PnR; big = seals, drop-steps, short-roll).`;
 
-export async function POST(req: Request) {
+const EXAMPLE_ASSISTANT = `Example format (2 days):
+DAY 1 (Skill + Athletic)
+- Ball-Handling: 3 x 40s In-n-Out + Cross (both hands), rest 40s
+- Finishing: 40 makes total (10/side: euro, inside-hand, reverse, power)
+- Shooting: 120 makes (5 spots x 8 makes x 3 rounds)
+- Plyo: Approach Jumps 4x3; Lateral Bounds 3x6/side
+- Strength: Trap Bar Deadlift 4x5; Split Squat 3x8/leg; Nordic ecc 3x4
+- Conditioning: Court Shuttles 6x down-and-back @75% (30s rest)
+
+DAY 2 (Skill + Athletic)
+- Footwork: Jab → 1-dribble pull-up both sides 5x5 makes/spot (50 makes)
+- Ball-Handling: Retreat-dribble to punch out 3x6/side (20–25s work, 35s rest)
+- Shooting: PnR pull-up + snake to floater, 60 makes
+- Speed: 10m sprint starts 6 reps; Slide-to-sprint 5 reps; Pro-Agility 5 reps
+- Strength/Power: Hang Power Clean 4x3; Bulgarian Split Squat 3x8/leg; Calf raise 3x12
+- Conditioning: 10 x 30/30 court runs`;
+
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const prompt = String(body?.prompt ?? "").trim();
 
     if (!prompt) {
       return NextResponse.json(
-        { error: "Please write your request (e.g., '3 day plan for a guard, goal explosiveness')." },
+        { error: "Please write your request (e.g., '10-day plan for a guard, goal explosiveness')." },
+        { status: 400 }
+      );
+    }
+
+    if (prompt.length < 40) {
+      return NextResponse.json(
+        { error: "Please add more detail: goal, days/week, level, position, equipment, constraints." },
         { status: 400 }
       );
     }
@@ -49,25 +73,7 @@ export async function POST(req: Request) {
       temperature: 0.5,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "assistant",
-          content: `Example format (2 days):
-DAY 1 (Skill + Athletic)
-- Ball-Handling: 3 x 40s In-n-Out + Cross (both hands), rest 40s
-- Finishing: 40 makes total (10/side: euro, inside-hand, reverse, power)
-- Shooting: 120 makes (5 spots x 8 makes x 3 rounds)
-- Plyo: Approach Jumps 4x3; Lateral Bounds 3x6/side
-- Strength: Trap Bar Deadlift 4x5; Split Squat 3x8/leg; Nordic ecc 3x4
-- Conditioning: Court Shuttles 6x down-and-back @75% (30s rest)
-
-DAY 2 (Skill + Athletic)
-- Footwork: Jab → 1-dribble pull-up both sides 5x5 makes/spot (50 makes)
-- Ball-Handling: Retreat-dribble to punch out 3x6/side (20–25s work, 35s rest)
-- Shooting: PnR pull-up + snake to floater, 60 makes
-- Speed: 10m sprint starts 6 reps; Slide-to-sprint 5 reps; Pro-Agility 5 reps
-- Strength/Power: Hang Power Clean 4x3; Bulgarian Split Squat 3x8/leg; Calf raise 3x12
-- Conditioning: 10 x 30/30 court runs`
-        },
+        { role: "assistant", content: EXAMPLE_ASSISTANT },
         { role: "user", content: prompt },
       ],
     });
@@ -80,8 +86,10 @@ DAY 2 (Skill + Athletic)
       );
     }
 
-    return NextResponse.json({ text });
-  } catch (err) {
+    const html = text.replace(/\n/g, "<br/>");
+    return NextResponse.json({ text, html });
+  } catch (error) {
+    console.error("AI request failed:", error);
     return NextResponse.json(
       { error: "AI request failed. Please try again." },
       { status: 500 }
