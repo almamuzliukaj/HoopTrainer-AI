@@ -6,6 +6,10 @@ import { Protected } from "@/components/Protected";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
+// 👇 CRUD imports!
+import AddWorkoutForm from "@/components/AddWorkoutForm";
+import WorkoutList from "@/components/WorkoutList";
+
 const SNIPPETS = [
   { quote: "The more you sweat in practice, the less you bleed in battle.", tip: "Keep ribcage stacked over hips during sprints." },
   { quote: "Repetition is the mother of learning, the father of action.", tip: "End every drill with 3 perfect reps to lock mechanics." },
@@ -16,6 +20,8 @@ const SNIPPETS = [
 export default function Dashboard() {
   const router = useRouter();
   const [snippetIndex, setSnippetIndex] = useState(0);
+  // 👇 Add refresh state for CRUD list
+  const [listRefresh, setListRefresh] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setSnippetIndex((p) => (p + 1) % SNIPPETS.length), 20000);
@@ -163,6 +169,15 @@ export default function Dashboard() {
                   <span className="helper">4 days ago · 28 min</span>
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* ========== CRUD AREA: Your Workouts ========== */}
+          <section>
+            <div className="panel" style={{ display: "grid", gap: 10, padding: "16px 16px", marginTop: 22 }}>
+              <strong style={{ fontSize: 18 }}>My Workouts (CRUD Demo)</strong>
+              <AddWorkoutForm onAdded={() => setListRefresh(r => !r)} />
+              <WorkoutList key={listRefresh ? "A" : "B"} />
             </div>
           </section>
         </main>
