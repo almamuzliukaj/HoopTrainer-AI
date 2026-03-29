@@ -29,7 +29,7 @@ To test this, I logged in as two different users. Each user sees only their own 
 
 This proves RLS is active and correct—no data leaks between users.
 
-![User 1 workouts screenshot](public/screenshots/CRUD_user1.png)
-![User 2 workouts screenshot](public/screenshots/CRUD_user2.png)
+![User 1 workouts screenshot](../public/screenshots/CRUD_user1.png)
+![User 2 workouts screenshot](../public/screenshots/CRUD_user2.png)
 
 Each user’s workouts and CRUD actions are private and isolated. This setup follows best practices for multi-user security and privacy.
