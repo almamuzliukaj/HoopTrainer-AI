@@ -42,23 +42,68 @@ DAY 2 (Skill + Athletic)
 - Strength/Power: Hang Power Clean 4x3; Bulgarian Split Squat 3x8/leg; Calf raise 3x12
 - Conditioning: 10 x 30/30 court runs`;
 
+type ChatRole = "user" | "assistant" | "system";
+interface ChatMessage {
+  role: ChatRole;
+  content: string;
+}
+
+function isChatMessage(m: unknown): m is ChatMessage {
+  return (
+    typeof m === "object" &&
+    m !== null &&
+    "role" in m &&
+    "content" in m &&
+    typeof (m as { content?: unknown }).content === "string" &&
+    ["user", "assistant", "system"].includes(
+      (m as { role?: unknown }).role as string
+    )
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const prompt = String(body?.prompt ?? "").trim();
 
-    if (!prompt) {
-      return NextResponse.json(
-        { error: "Please write your request (e.g., '10-day plan for a guard, goal explosiveness')." },
-        { status: 400 }
-      );
-    }
+    let messagesArr: ChatMessage[] = [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "assistant", content: EXAMPLE_ASSISTANT },
+    ];
 
-    if (prompt.length < 40) {
-      return NextResponse.json(
-        { error: "Please add more detail: goal, days/week, level, position, equipment, constraints." },
-        { status: 400 }
-      );
+    // If frontend sends message history
+    if (Array.isArray(body.messages) && body.messages.length > 0) {
+      const rawMessages: unknown[] = body.messages;
+      messagesArr = [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...rawMessages
+          .filter(isChatMessage)
+          .map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+      ];
+    } else {
+      // Single prompt fallback
+      const prompt = String(body?.prompt ?? "").trim();
+      if (!prompt) {
+        return NextResponse.json(
+          {
+            error:
+              "Please write your request (e.g., '10-day plan for a guard, goal explosiveness').",
+          },
+          { status: 400 }
+        );
+      }
+      if (prompt.length < 40) {
+        return NextResponse.json(
+          {
+            error:
+              "Please add more detail: goal, days/week, level, position, equipment, constraints.",
+          },
+          { status: 400 }
+        );
+      }
+      messagesArr.push({ role: "user", content: prompt });
     }
 
     if (!process.env.GROQ_API_KEY) {
@@ -71,11 +116,7 @@ export async function POST(req: NextRequest) {
     const completion = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       temperature: 0.5,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "assistant", content: EXAMPLE_ASSISTANT },
-        { role: "user", content: prompt },
-      ],
+      messages: messagesArr,
     });
 
     const text = completion.choices[0]?.message?.content?.trim();
