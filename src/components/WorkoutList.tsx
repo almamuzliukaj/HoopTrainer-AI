@@ -30,55 +30,53 @@ export default function WorkoutList() {
     setLoading(false);
   };
 
-useEffect(() => {
-  const fetchData = async () => {
-    await fetchWorkouts();
-  };
-  fetchData();
-}, []);
+  useEffect(() => {
+    (async () => {
+      await fetchWorkouts();
+    })();
+  }, []);
 
   return (
     <div>
       <div
         style={{
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "flex-end",
           justifyContent: "space-between",
-          margin: "16px 0 10px",
+          margin: "24px 0 19px",
         }}
       >
         <h2 style={{
-          fontSize: 22,
-          fontWeight: 800,
-          letterSpacing: 0.7,
+          fontSize: 25,
+          fontWeight: 900,
+          letterSpacing: 0.9,
           margin: 0,
-          color: "var(--accent)",
+          color: "var(--accent-2)",
           display: "flex",
           alignItems: "center",
-          gap: 8
+          gap: 12
         }}>
-          🗂️ My Workouts
+          🏋️‍♂️ My Workouts
         </h2>
         <span style={{
           color: "var(--muted)",
-          fontSize: 14,
-          fontWeight: 500,
-          paddingTop: 3
+          fontSize: 15.2,
+          fontWeight: 600,
         }}>
           {workouts.length} total
         </span>
       </div>
-      {loading && <div className="helper" style={{ padding: 15 }}>Loading...</div>}
+      {loading && <div className="helper" style={{ padding: 21, fontWeight: 600, fontSize:16 }}>Loading...</div>}
       {(!loading && !workouts.length) && (
-        <div className="helper" style={{ padding: 20, textAlign: "center" }}>
+        <div className="helper" style={{ padding: 32, textAlign: "center", color: "var(--muted)", fontWeight:700, fontSize:17 }}>
           <b>🚫 You have no workouts yet.</b>
           <br />
-          Start by adding a new one!
+          <span style={{fontSize:15, fontWeight:500}}>Start by adding a new one!</span>
         </div>
       )}
       <div style={{
         display: 'grid',
-        gap: 16,
+        gap: 26,
       }}>
         {workouts.map(workout => (
           <WorkoutItem key={workout.id} workout={workout} onUpdated={fetchWorkouts} />

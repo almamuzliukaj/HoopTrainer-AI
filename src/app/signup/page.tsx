@@ -36,11 +36,44 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="bg-ball-left" style={{ minHeight: "100vh", alignItems: "center" }}>
-      <main className="responsive-main" style={{ width: "min(520px, 94vw)", display: "flex", justifyContent: "center" }}>
-        <div className="auth-card" style={{ padding: "32px 32px 34px", width: "100%" }}>
+    <div
+      className="bg-ball-left"
+      style={{
+        minHeight: "100vh",
+        alignItems: "center",
+        justifyContent: "center",
+        display: "flex",
+        padding: "0 16px",
+      }}
+    >
+      <main
+        className="responsive-main"
+        style={{
+          width: "min(520px, 100%)",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          className="auth-card"
+          style={{
+            padding: "32px 32px 34px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <Link href="/" className="helper" style={{ fontWeight: 700, padding: "6px 10px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>← Home</Link>
+            <Link
+              href="/"
+              className="helper"
+              style={{
+                fontWeight: 700,
+                padding: "6px 10px",
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >← Home</Link>
           </div>
 
           <h1 style={{ marginBottom: 10, fontSize: 30, letterSpacing: 0.3 }}>Create account</h1>
@@ -101,12 +134,52 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <div className="auth-actions" style={{ marginTop: 18 }}>
-            <span className="auth-switch">Already have an account?</span>
-            <Link href="/login" style={{ color: "var(--accent)", fontWeight: 700 }}>Login</Link>
+          <div style={{
+            marginTop: 18,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}>
+            <span className="auth-switch" style={{
+              color: "var(--muted)",
+              fontSize: 15,
+              fontWeight: 500
+            }}>Already have an account?</span>
+            <Link
+              href="/login"
+              style={{
+                padding: "11px 24px",
+                borderRadius: 10,
+                fontWeight: 700,
+                background: "linear-gradient(135deg, var(--accent), #3c7be0)",
+                color: "#0f1524",
+                boxShadow: "0 6px 18px rgba(60,123,224,0.22)",
+                border: "none",
+                textDecoration: "none",
+                fontSize: 15,
+                transition: "background 0.2s, box-shadow 0.2s"
+              }}
+            >
+              Login
+            </Link>
           </div>
         </div>
       </main>
+      <style>{`
+        @media (max-width: 600px) {
+          .auth-card {
+            padding-left: 13px !important;
+            padding-right: 13px !important;
+          }
+          .responsive-main {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
