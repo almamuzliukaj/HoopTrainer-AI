@@ -37,7 +37,7 @@ export default function SignupPage() {
 
   return (
     <div className="bg-ball-left" style={{ minHeight: "100vh", alignItems: "center" }}>
-      <main style={{ width: "min(520px, 94vw)", display: "flex", justifyContent: "center" }}>
+      <main className="responsive-main" style={{ width: "min(520px, 94vw)", display: "flex", justifyContent: "center" }}>
         <div className="auth-card" style={{ padding: "32px 32px 34px", width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <Link href="/" className="helper" style={{ fontWeight: 700, padding: "6px 10px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>← Home</Link>
@@ -87,7 +87,15 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading || !email || !password || !name || isPasswordShort}
-              style={{ padding: "12px 16px", borderRadius: 12, background: "linear-gradient(135deg, var(--accent-2), #4fc9bd)", color: "#0f1524", fontWeight: 800, border: "1px solid rgba(79,201,189,0.55)", boxShadow: "0 12px 26px rgba(79,201,189,0.30)" }}
+              style={{
+                padding: "12px 16px",
+                borderRadius: 12,
+                background: "linear-gradient(135deg, var(--accent-2), #4fc9bd)",
+                color: "#0f1524",
+                fontWeight: 800,
+                border: "1px solid rgba(79,201,189,0.55)",
+                boxShadow: "0 12px 26px rgba(79,201,189,0.30)",
+              }}
             >
               {loading ? "Creating..." : "Sign up"}
             </button>

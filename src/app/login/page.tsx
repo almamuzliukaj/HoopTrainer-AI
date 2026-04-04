@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   return (
     <div className="bg-ball-left" style={{ minHeight: "100vh", alignItems: "center" }}>
-      <main style={{ width: "min(520px, 94vw)", display: "flex", justifyContent: "center" }}>
+      <main className="responsive-main" style={{ width: "min(520px, 94vw)", display: "flex", justifyContent: "center" }}>
         <div className="auth-card" style={{ padding: "32px 32px 34px", width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <Link href="/" className="helper" style={{ fontWeight: 700, padding: "6px 10px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>← Home</Link>

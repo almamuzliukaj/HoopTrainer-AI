@@ -43,11 +43,14 @@ export default function PlanPage() {
     [days, position, level, goal, equipment, intensity, age, notes]
   );
 
+  // ——— Responsive nav style:
   const navStyle: React.CSSProperties = {
     position: "sticky",
     top: 0,
     zIndex: 20,
     display: "flex",
+    flexWrap: "wrap",          // Responsive
+    minWidth: 0,               // Responsive
     justifyContent: "space-between",
     alignItems: "center",
     padding: "10px 16px",
@@ -158,7 +161,17 @@ export default function PlanPage() {
   return (
     <Protected>
       <div className="bg-ball-left" style={{ fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}>
-        <main style={{ width: "min(1120px, 96vw)", margin: "0 auto", padding: "0 0 72px", display: "flex", flexDirection: "column", gap: 18 }}>
+        <main
+          className="responsive-main"
+          style={{
+            width: "min(1120px, 96vw)",
+            margin: "0 auto",
+            padding: "0 0 72px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
           {/* Nav */}
           <nav style={navStyle}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

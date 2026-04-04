@@ -6,8 +6,8 @@ export default function Page() {
     top: 0,
     zIndex: 20,
     display: "flex",
-    flexWrap: "wrap",          // ADD for responsive
-    minWidth: 0,               // ADD to prevent overflow
+    flexWrap: "wrap",
+    minWidth: 0,
     justifyContent: "space-between",
     alignItems: "center",
     padding: "10px 16px",
@@ -67,9 +67,8 @@ export default function Page() {
 
   return (
     <div className="bg-ball-left">
-      {/* main top padding set to 0 to remove space above nav */}
       <main
-        className="responsive-main" // ADD for responsive CSS targeting
+        className="responsive-main"
         style={{
           width: "min(1180px, 96vw)",
           margin: "0 auto",

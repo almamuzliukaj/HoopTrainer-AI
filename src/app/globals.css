@@ -237,13 +237,27 @@ h1, h2, h3 { margin: 0; letter-spacing: 0.1px; }
   color: var(--muted);
 }
 
+/* --- RESPONSIVE FIXES FOR ALL PAGES & NAVBAR & CARDS --- */
+
+.auth-card {
+  width: min(480px, 94vw);
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 26px 26px 28px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 18px 44px rgba(0,0,0,0.42);
+  backdrop-filter: blur(4px);
+}
+
 @media (max-width: 700px) {
   body {
     padding: 0;
   }
   main, .panel, .card, .responsive-main {
-    padding-left: 6vw !important;
-    padding-right: 6vw !important;
+    padding-left: 2vw !important;
+    padding-right: 2vw !important;
     width: 100vw !important;
     min-width: 0 !important;
     box-sizing: border-box;
@@ -252,11 +266,19 @@ h1, h2, h3 { margin: 0; letter-spacing: 0.1px; }
   .bg-ball-left {
     padding: 24px 0 64px;
   }
+  .auth-card {
+    width: 99vw;
+    min-width: 0;
+    border-radius: 0;
+    padding: 10vw 3vw;
+  }
   nav, [style*='position: sticky'] {
+    display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 8px !important;
-    padding: 8px 4vw !important;
+    justify-content: center !important;
+    gap: 9px !important;
+    padding: 8px 2vw !important;
     border-radius: 0 !important;
     min-width: 0 !important;
   }
@@ -264,26 +286,37 @@ h1, h2, h3 { margin: 0; letter-spacing: 0.1px; }
     flex-direction: row !important;
     justify-content: space-between !important;
     gap: 6px !important;
+    flex-wrap: wrap !important;
+    min-width: 0 !important;
   }
   nav > div > span, nav > div > div {
     font-size: 15px !important;
   }
+  nav button,
+  nav a {
+    font-size: 14px !important;
+    padding: 8px 10px !important;
+    min-width: 0 !important;
+  }
   section[style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
   }
-  .auth-card {
-    width: 100vw;
-    min-width: 0;
-    border-radius: 0;
-    padding: 18px 8vw 20px;
-  }
 }
-@media (max-width: 440px) {
+
+@media (max-width: 480px) {
+  .auth-card {
+    width: 100vw !important;
+    padding: 2vw 1vw 6vw !important;
+  }
   main, .panel, .card, .responsive-main {
-    padding-left: 2vw !important;
-    padding-right: 2vw !important;
+    padding-left: 1vw !important;
+    padding-right: 1vw !important;
   }
   nav, [style*='position: sticky'] {
-    padding: 8px 2vw !important;
+    padding: 8px 1vw !important;
   }
+}
+
+.panel, .card {
+  box-sizing: border-box;
 }
