@@ -4,19 +4,52 @@ import { Protected } from "@/components/Protected";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
-// Simple mobile check (if want to use window instead, see note below)
-const isTouchDevice = () =>
-  typeof window !== "undefined" &&
-  ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-
-type Conversation = { id: string; title: string; user_id?: string; created_at?: string };
-type Message = { id: string; conversation_id: string; role: "user" | "ai"; content: string; created_at?: string };
+// ========== Toaster =============
+function Toaster({ message, show, onHide }: { message: string; show: boolean; onHide: () => void }) {
+  useEffect(() => {
+    if (show) {
+      const t = setTimeout(onHide, 2100);
+      return () => clearTimeout(t);
+    }
+  }, [show, onHide]);
+  return (
+    <div
+      style={{
+        position: "fixed",
+        left: "50%",
+        bottom: 44,
+        transform: "translateX(-50%)",
+        zIndex: 2000,
+        pointerEvents: "none",
+        opacity: show ? 1 : 0,
+        transition: "opacity 0.36s cubic-bezier(.46,.03,.52,.96)",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg,#19e6be,#33aadd 120%)",
+          color: "#00303a",
+          fontWeight: 700,
+          fontSize: 15.7,
+          borderRadius: 15,
+          padding: "11px 26px",
+          boxShadow: "0px 4px 26px 0px #20fdd5c7,0px 1px 9px #0fbede1e",
+          opacity: 0.94,
+          letterSpacing: ".02em",
+        }}
+      >
+        {message}
+      </div>
+    </div>
+  );
+}
 
 // ===== NAVBAR =====
 function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
     <nav style={{
-      position: "sticky", top: 0, zIndex: 30, display: "flex", justifyContent: "space-between", alignItems: "center",
+      position: "sticky", top: 0, zIndex: 30,
+      display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "0 1rem", minHeight: 56, background: "rgba(24,31,49,0.98)",
       borderBottom: "1.7px solid var(--border)", boxShadow: "0 6px 18px rgba(36,58,90,0.12)"
     }}>
@@ -54,6 +87,9 @@ function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   );
 }
 
+type Conversation = { id: string; title: string; user_id?: string; created_at?: string };
+type Message = { id: string; conversation_id: string; role: "user" | "ai"; content: string; created_at?: string };
+
 export default function PlanPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -65,17 +101,29 @@ export default function PlanPage() {
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Menu/UX state
+  // Modal and toast state
+  const [actionMenuId, setActionMenuId] = useState<string | null>(null);
+  const [isRenameModal, setIsRenameModal] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // For desktop: which chat id menu is open
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  // For mobile: which chat id is "held" and is bottomsheet open
-  const [mobileMenuId, setMobileMenuId] = useState<string | null>(null);
+  const [toasterMsg, setToasterMsg] = useState('');
+  const [toasterShow, setToasterShow] = useState(false);
 
-  // Touch/hold detection
+  // New Chat input modal state:
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatName, setNewChatName] = useState("");
+
+  function showToast(m: string) {
+    setToasterMsg(m); setToasterShow(true);
+  }
+
+  // Touch/hold detection for mobile
   const holdTimer = useRef<NodeJS.Timeout | null>(null);
+  const isTouchDevice = () =>
+    typeof window !== "undefined" && (("ontouchstart" in window) || navigator.maxTouchPoints > 0);
 
-  // Fetch conversations on mount
+  // Fetch conversations/messages
   useEffect(() => {
     (async () => {
       setLoadingConvs(true); setErr(null);
@@ -89,8 +137,6 @@ export default function PlanPage() {
       if (data?.length) setActiveId(a => a ?? data[0].id);
     })();
   }, []);
-
-  // Fetch messages upon activeId
   useEffect(() => {
     if (!activeId) return;
     (async () => {
@@ -109,35 +155,41 @@ export default function PlanPage() {
     if (e) e.preventDefault();
     if (!input.trim()) return;
     setSending(true); setErr(null);
-
     let convId = activeId;
     const { data: { user } } = await supabase.auth.getUser();
     const automaticTitle = input.length > 25 ? input.slice(0, 25) + "..." : input;
-
     if (!convId) {
       if (!user) { setErr("Not logged in!"); setSending(false); return; }
       const { data, error } = await supabase
         .from("conversations")
-        .insert([{ user_id: user.id, title: automaticTitle }])
+        .insert([{ user_id: user.id, title: automaticTitle || "Untitled" }])
         .select("*").single();
       if (error) { setErr(error.message); setSending(false); return; }
       convId = data.id;
       setConversations(cs => [{ ...data }, ...cs]);
       setActiveId(convId);
+    } else {
+      // If conversation exists, but has no title or is "Untitled", set name to the first user message.
+      const convo = conversations.find(c => c.id === convId);
+      if (convo && (!convo.title || convo.title.trim().toLowerCase() === "untitled" || convo.title.trim() === "")) {
+        const { error } = await supabase
+          .from("conversations")
+          .update({ title: automaticTitle || "Untitled" })
+          .eq("id", convId);
+        if (!error)
+          setConversations(cs => cs.map(c => c.id === convId ? { ...c, title: automaticTitle || "Untitled" } : c));
+      }
     }
 
     const { error: err1 } = await supabase
-      .from("messages")
-      .insert([{ conversation_id: convId, role: "user", content: input }]);
+      .from("messages").insert([{ conversation_id: convId, role: "user", content: input }]);
     if (err1) { setErr(err1.message); setSending(false); return; }
-
     setMessages(ms => [...ms, {
       id: Math.random().toString(32).slice(2),
       conversation_id: convId!, role: 'user', content: input, created_at: new Date().toISOString()
     }]);
     const promptToSend = input;
     setInput("");
-
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -156,57 +208,63 @@ export default function PlanPage() {
         id: Math.random().toString(32).slice(2),
         conversation_id: convId!, role: 'ai', content: aiMsg, created_at: new Date().toISOString()
       }]);
+      showToast("AI response added");
     } catch (e) {
       setErr("Network error");
+      showToast("Error sending message.");
     } finally {
       setSending(false);
       setTimeout(() => scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 200);
     }
   }
 
-  async function addConversation() {
+  async function realAddConversation(name: string) {
     setErr(null);
+    setShowNewChatModal(false);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setErr("Not logged in!"); return; }
+    if (!user) { setErr("Not logged in!"); showToast("Not logged in."); return; }
     const { data, error } = await supabase
       .from("conversations")
-      .insert([{ user_id: user.id, title: "New Chat" }])
+      .insert([{ user_id: user.id, title: name || "Untitled" }])
       .select("*").single();
-    if (error) { setErr(error.message); return; }
+    if (error) { setErr(error.message); showToast("Failed to create chat."); return; }
     setConversations(cs => [{ ...data }, ...cs]);
     setActiveId(data.id);
     setMessages([]);
     setIsSidebarOpen(false);
+    showToast("New chat created.");
+    setNewChatName("");
   }
 
-  // --- Rename & Delete logic, universal for mobile & desktop
-  async function renameConversation(id: string, currentName: string) {
-    const newName = window.prompt("Rename chat:", currentName);
-    setMenuOpenId(null); setMobileMenuId(null); // close any open menu
-    if (!newName || !newName.trim() || newName === currentName) return;
+  // --- Rename logic (identical)
+  async function doRename(id: string, value: string) {
+    setIsRenameModal(false);
+    setActionMenuId(null);
+    const name = value.trim();
+    if (!name) return;
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setErr("Not logged in!"); return; }
+    if (!user) { setErr("Not logged in!"); showToast("Rename failed."); return; }
     const existing = conversations.find(c => c.id === id && c.user_id === user.id);
-    if (!existing) { setErr("You can only rename your own chats."); return; }
-    const { error } = await supabase.from("conversations").update({ title: newName.trim() }).eq("id", id).eq("user_id", user.id);
+    if (!existing) { setErr("You can only rename your own chats."); showToast("Rename failed."); return; }
+    const { error } = await supabase.from("conversations").update({ title: name }).eq("id", id).eq("user_id", user.id);
     if (!error) {
-      // Refetch conversations for safety!
       const { data } = await supabase.from("conversations").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       setConversations(data || []);
+      showToast("Renamed!");
     } else {
-      setErr("Rename failed: " + error.message);
+      setErr("Rename failed: " + error.message); showToast("Rename failed.");
     }
   }
-
-  async function deleteConversation(id: string) {
-    const isConfirmed = window.confirm("Are you sure you want to delete this chat?");
-    setMenuOpenId(null); setMobileMenuId(null);
-    if (!isConfirmed) return;
+  // --- Actually delete, after confirmation
+  async function actuallyDeleteConversation(id: string) {
+    setConfirmDeleteId(null);
+    setActionMenuId(null);
+    setIsRenameModal(false);
     setErr(null);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setErr("Not logged in!"); return; }
+    if (!user) { setErr("Not logged in!"); showToast("Not logged in."); return; }
     const existing = conversations.find(c => c.id === id && c.user_id === user.id);
-    if (!existing) { setErr("You can only delete your own chats."); return; }
+    if (!existing) { setErr("You can only delete your own chats."); showToast("Delete failed."); return; }
     await supabase.from("messages").delete().eq("conversation_id", id);
     const { error } = await supabase.from("conversations").delete().eq("id", id).eq("user_id", user.id);
     if (!error) {
@@ -216,144 +274,157 @@ export default function PlanPage() {
         setActiveId(data?.[0]?.id);
         setMessages([]);
       }
+      showToast("Chat deleted.");
     } else {
-      setErr("Delete failed: " + error.message);
+      setErr("Delete failed: " + error.message); showToast("Delete failed.");
     }
   }
 
-  // --- Hamburger/bottom-sheet for mobile: block touch scroll on sheet open
+  // Modal/Sheet: Escape, overlay
   useEffect(() => {
-    if (mobileMenuId) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-  }, [mobileMenuId]);
-
-  // --- Sidebar rendering (mobile & desktop behaviors)
-  function renderConversationRow(c: Conversation) {
-    // Desktop: click 3 dots for menu, mobile: hold for sheet
-    const displayName = c.title?.trim() ? c.title : (messages.find(m => m.conversation_id === c.id)?.content?.slice(0, 25) ?? "New Chat");
-    const isActive = activeId === c.id;
-
-    // --- Handlers for touch/hold
-    function handleTouchStart(e: React.TouchEvent) {
-      if (holdTimer.current) clearTimeout(holdTimer.current);
-      holdTimer.current = setTimeout(() => { setMobileMenuId(c.id); }, 480); // ~0.5s
+    function esc(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsRenameModal(false);
+        setActionMenuId(null);
+        setConfirmDeleteId(null);
+        setShowNewChatModal(false);
+      }
     }
-    function handleTouchEnd() { if (holdTimer.current) clearTimeout(holdTimer.current); }
-    function handleTouchMove() { if (holdTimer.current) clearTimeout(holdTimer.current); }
-    
+    if (actionMenuId || isRenameModal || confirmDeleteId || showNewChatModal) {
+      document.addEventListener("keydown", esc);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.removeEventListener("keydown", esc);
+      document.body.style.overflow = "";
+    }
+    return () => { document.removeEventListener("keydown", esc); document.body.style.overflow = ""; };
+  }, [actionMenuId, isRenameModal, confirmDeleteId, showNewChatModal]);
+
+  // Overlay for closing sidebar by clicking outside it
+  function SidebarOverlay() {
+    if (!isSidebarOpen) return null;
     return (
       <div
-        key={c.id}
+        onClick={() => setIsSidebarOpen(false)}
         style={{
-          display: "flex", alignItems: "center",
-          background: isActive ? "rgba(48,189,186, 0.15)" : "transparent",
-          border: isActive ? "1.5px solid var(--accent-2)" : "1.5px solid transparent",
-          borderRadius: 8, position: "relative", padding: "10px 8px",
-          fontWeight: 500, fontSize: "14.5px",
-          color: isActive ? "var(--accent-2)" : "var(--text)",
-          cursor: "pointer", transition: "all 0.13s",
-          userSelect: "none"
+          position: "fixed", zIndex: 49, inset: 0,
+          background: "rgba(8,13,22,0.24)",
+          cursor: "pointer"
         }}
-        onClick={() => {
-          setActiveId(c.id);
-          setErr(null);
-          setIsSidebarOpen(false);
-        }}
-        // For touch: long hold for menu, otherwise ignore touches.
-        onTouchStart={e => {
-          if (isTouchDevice()) handleTouchStart(e);
-        }}
-        onTouchEnd={e => {
-          if (isTouchDevice()) handleTouchEnd();
-        }}
-        onTouchMove={e => {
-          if (isTouchDevice()) handleTouchMove();
-        }}
-      >
-        <span style={{
-          flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
-          paddingRight: 5, fontWeight: isActive ? 700 : 500
-        }} title={displayName}>{displayName}</span>
-        {/* Desktop: three-dots menu */}
-        {!isTouchDevice() && (
-          <div style={{ position: "relative", zIndex: 65 }}>
-            <button
-              onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === c.id ? null : c.id); }}
-              style={{
-                background: "none", border: "none",
-                color: isActive ? "var(--accent-2)" : "#6b7dab",
-                fontSize: 18, cursor: "pointer", padding: "0 4px",
-                lineHeight: 1
-              }}
-              title="Options"
-            >⋮</button>
-            {menuOpenId === c.id && (
-              <div style={{
-                position: "absolute", right: 0, top: 24,
-                background: "#1e2738", border: "1px solid var(--border)",
-                borderRadius: 8, display: "flex", flexDirection: "column",
-                minWidth: 100, boxShadow: "0 6px 15px rgba(0,0,0,0.3)",
-                overflow: "hidden", zIndex: 70
-              }}>
-                <button 
-                  onClick={e => { e.stopPropagation(); renameConversation(c.id, displayName); }}
-                  style={{
-                    padding: "10px 14px", border: "none", background: "none",
-                    color: "white", textAlign: "left", cursor: "pointer",
-                    fontSize: 13.5, borderBottom: "1px solid var(--border)"
-                  }}>Rename</button>
-                <button 
-                  onClick={e => { e.stopPropagation(); deleteConversation(c.id); }}
-                  style={{
-                    padding: "10px 14px", border: "none", background: "none",
-                    color: "#ff5e5e", textAlign: "left", cursor: "pointer",
-                    fontSize: 13.5
-                  }}>Delete</button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+        aria-label="Close sidebar"
+      />
     );
   }
 
-  // --- Hamburger sheet menu (mobile only)
-  function renderMobileMenu() {
-    if (!mobileMenuId) return null;
-    const c = conversations.find(x => x.id === mobileMenuId);
+  // New Chat Modal
+  function renderNewChatModal() {
+    if (!showNewChatModal) return null;
+    return (
+      <>
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 1020,
+            background: "rgba(12,18,27,0.55)"
+          }} onClick={() => {setShowNewChatModal(false); setNewChatName("");}} />
+        <div
+          style={{
+            position: "fixed", left: "50%", top: "50%",
+            transform: "translate(-50%,-50%)",
+            zIndex: 1025,
+            background: "#18212c",
+            minWidth: 330,
+            borderRadius: 21,
+            padding: "32px 24px 19px 24px",
+            boxShadow: "0 10px 32px rgba(44,252,208,.13), 0 2px 12px #0e161d8a",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 21
+          }}>
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 900,
+              color: "#27ffd1",
+              marginBottom: 2
+            }}
+          >Name your chat</div>
+          <input
+            autoFocus
+            value={newChatName}
+            onChange={e => setNewChatName(e.target.value)}
+            placeholder="e.g. Shooting drills for 3-point improvement"
+            style={{
+              border: "1.4px solid #36d4c6",
+              background: "#232b3a", color: "#dbfff3", fontWeight: 700,
+              borderRadius: 8, fontSize: 15.7, padding: "11px 8px",
+              marginBottom: 7, width: "100%", maxWidth: 240,
+              outline: "none"
+            }}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                realAddConversation(newChatName.trim());
+              }
+            }}
+          />
+          <div style={{ display: "flex", gap: 14 }}>
+            <button
+              onClick={() => realAddConversation(newChatName.trim())}
+              style={{
+                padding: "8px 28px", background: "linear-gradient(123deg, #20e9c9 80%, #146db6 100%)",
+                color: "#212d2d", border: "none", borderRadius: 7, fontWeight: 900, fontSize: 15
+              }}
+            >Create</button>
+            <button
+              onClick={() => {setShowNewChatModal(false); setNewChatName("");}}
+              style={{
+                padding: "8px 18px", background: "#293040",
+                color: "#76cacc", border: "none", borderRadius: 7, fontWeight: 900, fontSize: 15
+              }}
+            >Cancel</button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  function renderActionMenu() {
+    if (!actionMenuId) return null;
+    const c = conversations.find(x => x.id === actionMenuId);
     if (!c) return null;
-    const displayName = c.title?.trim() ? c.title : "New Chat";
+    const displayName = c.title?.trim() ? c.title : "Untitled";
     return (
       <>
         <div style={{
-          position: "fixed", inset: 0, zIndex: 999,
-          background: "rgba(0,0,0,0.40)"
-        }} onClick={() => setMobileMenuId(null)} />
+          position: "fixed", inset: 0, zIndex: 1001, background: "rgba(12,18,27,0.45)",
+          display: "flex", justifyContent: "center", alignItems: "center"
+        }} onClick={() => setActionMenuId(null)} />
         <div style={{
-          position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 1000,
-          background: "#19213a", borderTopLeftRadius: 18, borderTopRightRadius: 18,
-          boxShadow: "0 -8px 32px rgba(0,0,0,.31)", minHeight: 136,
-          padding: "18px 24px 12px 24px", display: "flex", flexDirection: "column", alignItems: "stretch", gap: 10
+          position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+          zIndex: 1002, background: "#212d43", boxShadow: "0 10px 38px -8px #121b26",
+          borderRadius: 20, minWidth: 300, maxWidth: 97, minHeight: 158, padding: "30px 28px 12px 28px",
+          display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12
         }}>
-          <div style={{ fontWeight: 700, color: "#79e9d8", fontSize: 16, marginBottom: 2, textAlign: "left" }}>{displayName}</div>
+          <div style={{
+            fontWeight: 700, color: "#24f0c6", fontSize: 16, marginBottom: 10, textAlign: "center", letterSpacing: ".01em",
+            textShadow: "0px 2px 16px #1861494d"
+          }}>{displayName}</div>
           <button
-            onClick={() => renameConversation(c.id, displayName)}
+            onClick={() => { setIsRenameModal(true); setActionMenuId(null); setRenameValue(displayName); }}
             style={{
-              background: "#333c5a", color: "white", border: "none",
-              borderRadius: 7, fontWeight: 800, fontSize: 15, padding: "10px 3px", marginBottom: 4
+              background: "#1e283a", color: "#baf7ea", border: "none",
+              borderRadius: 7, fontWeight: 900, fontSize: 16, padding: "13px 3px", marginBottom: 4,
+              boxShadow: "0 1px 8px #00d7b22e", outline: "none", transition: ".13s"
             }}
-          >Rename</button>
+          >Rename Conversation</button>
           <button
-            onClick={() => deleteConversation(c.id)}
+            onClick={() => { setConfirmDeleteId(c.id); setActionMenuId(null);} }
             style={{
-              background: "#302d32", color: "#ef5858", border: "none",
-              borderRadius: 7, fontWeight: 900, fontSize: 15, padding: "10px 3px"
+              background: "#281a20", color: "#ff7e7e", border: "none",
+              borderRadius: 7, fontWeight: 900, fontSize: 16, padding: "13px 3px"
             }}
           >Delete</button>
           <button
-            onClick={() => setMobileMenuId(null)}
+            onClick={() => setActionMenuId(null)}
             style={{
-              background: "none", color: "#89b1ba", border: "none", fontSize: 15, padding: 8, marginTop: 3
+              background: "none", color: "#7eced6", border: "none", fontSize: 15, padding: 10, marginTop: 3
             }}
           >Cancel</button>
         </div>
@@ -361,34 +432,163 @@ export default function PlanPage() {
     );
   }
 
+  function renderRenameModal() {
+    if (!isRenameModal) return null;
+    const c = conversations.find(x => x.id === activeId);
+    return (
+      <>
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 2001, background: "rgba(20,32,48,0.56)"
+        }} onClick={() => setIsRenameModal(false)}/>
+        <div style={{
+          position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+          zIndex: 2002, background: "#222a36", boxShadow: "0 10px 38px -8px #121b26", borderRadius: 18,
+          minWidth: 335, maxWidth: 97, minHeight: 158, padding: "35px 22px 24px 22px",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 15
+        }}>
+          <div style={{
+            color: "#21e0ac", fontWeight: 800, fontSize: 18, letterSpacing: ".001em", marginBottom: 0
+          }}>Rename Conversation</div>
+          <input
+            autoFocus
+            placeholder="New conversation name"
+            value={renameValue}
+            onChange={e => setRenameValue(e.target.value)}
+            style={{
+              padding: "12px 10px", fontSize: 15, borderRadius: 10, border: "1.5px solid #29f1d1",
+              background: "#1a2448", color: "#d4ffe1", fontWeight: 700, marginBottom: 6, outline: "none", minWidth: 210
+            }}
+            onKeyDown={(e) => { if (e.key === "Enter") doRename(activeId!, renameValue); }}
+          />
+          <div style={{ display: "flex", gap: 16 }}>
+            <button
+              onClick={() => doRename(activeId!, renameValue)}
+              style={{
+                padding: "8px 26px", background: "linear-gradient(135deg, #15f7c1 80%, #168ad1 120%)",
+                border: "none", borderRadius: 8, color: "#003d37", fontWeight: 900, fontSize: 15
+              }}>Rename</button>
+            <button
+              onClick={() => setIsRenameModal(false)}
+              style={{
+                padding: "8px 20px", background: "#1f2326",
+                border: "none", borderRadius: 8, color: "#7bc8ce", fontWeight: 800, fontSize: 15
+              }}>Cancel</button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  function renderDeleteConfirmModal() {
+    if (!confirmDeleteId) return null;
+    const c = conversations.find(x => x.id === confirmDeleteId);
+    return (
+      <>
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 3001, background: "rgba(30,38,46,.6)"
+        }} onClick={() => setConfirmDeleteId(null)}/>
+        <div style={{
+          position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+          zIndex: 3002, background: "#232b38", boxShadow: "0 12px 40px -8px #121b26",
+          borderRadius: 22, minWidth: 345, padding: "36px 28px 22px 28px",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 20
+        }}>
+          <div style={{
+            color: "#ff6a82", fontWeight: 900, fontSize: 19, letterSpacing: ".01em", marginBottom: 2,
+            textShadow: "0px 2px 10px #7d354d38"
+          }}>
+            Delete chat?
+          </div>
+          <div style={{ color: "#c2e5e0", fontSize: 15.5, marginBottom: 3, textAlign: "center" }}>
+            Are you sure you want to delete <span style={{fontWeight:800,color:"#27eed7"}}>{c?.title || "this chat"}</span>?
+            <br/>This can’t be undone.
+          </div>
+          <div style={{ display: "flex", gap: 16 }}>
+            <button
+              onClick={() => actuallyDeleteConversation(confirmDeleteId)}
+              style={{
+                padding: "10px 30px", background: "linear-gradient(100deg, #ff366a 60%, #f27c66 120%)",
+                border: "none", borderRadius: 8, color: "#ffeef7", fontWeight: 900, fontSize: 15, boxShadow: "0 1px 11px #f2105e31"
+              }}>
+              Delete
+            </button>
+            <button
+              onClick={() => setConfirmDeleteId(null)}
+              style={{
+                padding: "10px 18px", background: "#181b33",
+                border: "none", borderRadius: 8, color: "#b6cddb", fontWeight: 800, fontSize: 15
+              }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  function renderConversationRow(c: Conversation) {
+    const displayName = c.title?.trim() ? c.title : "Untitled";
+    const isActive = activeId === c.id;
+    function handleTouchStart(e: React.TouchEvent) {
+      if (holdTimer.current) clearTimeout(holdTimer.current);
+      holdTimer.current = setTimeout(() => { setActionMenuId(c.id); }, 500);
+    }
+    function handleTouchEnd() { if (holdTimer.current) clearTimeout(holdTimer.current); }
+    function handleTouchMove() { if (holdTimer.current) clearTimeout(holdTimer.current); }
+    return (
+      <div
+        key={c.id}
+        style={{
+          display: "flex", alignItems: "center", background: isActive ? "rgba(48,189,186, 0.15)" : "transparent",
+          border: isActive ? "1.5px solid var(--accent-2)" : "1.5px solid transparent",
+          borderRadius: 8, position: "relative", padding: "10px 8px",
+          fontWeight: 500, fontSize: "14.5px", color: isActive ? "var(--accent-2)" : "var(--text)",
+          cursor: "pointer", transition: "all 0.13s", userSelect: "none"
+        }}
+        onClick={() => { setActiveId(c.id); setErr(null); }}
+        onTouchStart={isTouchDevice() ? handleTouchStart : undefined}
+        onTouchEnd={isTouchDevice() ? handleTouchEnd : undefined}
+        onTouchMove={isTouchDevice() ? handleTouchMove : undefined}
+      >
+        <span style={{
+          flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+          paddingRight: 5, fontWeight: isActive ? 700 : 500
+        }} title={displayName}>{displayName}</span>
+        <div style={{ position: "relative", zIndex: 65 }}>
+          <button
+            onClick={e => { e.stopPropagation(); setActionMenuId(c.id); }}
+            style={{
+              background: "none", border: "none", color: isActive ? "var(--accent-2)" : "#6b7dab",
+              fontSize: 18, cursor: "pointer", padding: "0 4px", lineHeight: 1
+            }}
+            title="Options"
+            tabIndex={0}
+          >⋮</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Protected>
-      {(menuOpenId || mobileMenuId) && (
-        <div onClick={() => { setMenuOpenId(null); setMobileMenuId(null); }}
-          style={{ position: "fixed", inset: 0, zIndex: 60 }}
-        />
-      )}
-      {isSidebarOpen && (
-        <div className="mobile-overlay" onClick={() => setIsSidebarOpen(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40 }}
-        />
-      )}
-
+      <Toaster message={toasterMsg} show={toasterShow} onHide={() => setToasterShow(false)} />
+      {actionMenuId && renderActionMenu()}
+      {isRenameModal && renderRenameModal()}
+      {renderDeleteConfirmModal()}
+      {renderNewChatModal()}
+      <SidebarOverlay />
       <div style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
         <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div style={{
           display: "flex", alignItems: "stretch",
           height: "calc(100vh - 56px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative"
         }}>
-          {/* === SIDEBAR === */}
           <aside className={`app-sidebar ${isSidebarOpen ? "open" : ""}`} style={{
             flex: "0 0 240px", maxWidth: 340, minWidth: 240,
             background: "rgba(17,23,38,0.993)", borderRadius: "14px 0 0 14px",
             boxShadow: "0 4px 29px rgba(26,189,155,0.07)",
             padding: "19px 12px 8px 17px", borderRight: "1.4px solid var(--border)",
-            overflowY: "auto",
-            display: "flex", flexDirection: "column", gap: 0,
-            transition: "transform 0.3s ease"
+            overflowY: "auto", display: "flex", flexDirection: "column", gap: 0, transition: "transform 0.3s ease"
           }}>
             <div style={{
               marginBottom: 20, display: "flex", alignItems: "center", gap: 9, justifyContent: "space-between"
@@ -398,7 +598,7 @@ export default function PlanPage() {
                 letterSpacing: '.06em', marginLeft: 2
               }}>Recents</span>
               <button
-                onClick={addConversation}
+                onClick={() => setShowNewChatModal(true)}
                 title="Create a new chat"
                 style={{
                   background: "linear-gradient(126deg, var(--accent-2), #328ec8 85%)",
@@ -420,19 +620,19 @@ export default function PlanPage() {
               }}>No chat history yet.</div>
             )}
           </aside>
-          {/* --- Render hamburger/bottomsheet menu (mobile only) */}
-          {renderMobileMenu()}
           {/* === CHAT PANEL === */}
           <section style={{
-            flex: 1, background: "linear-gradient(128deg,#191f2b 50%,#222b38 98%)",
+            flex: 1,
+            background: "linear-gradient(128deg,#191f2b 50%,#222b38 98%)",
             borderRadius: "0 14px 14px 0",
             boxShadow: "0 8px 48px rgba(93,230,170,0.08), 0 1px 10px rgba(60,123,224,0.045)",
-            display: "flex", flexDirection: "column", position: "relative", minWidth: 0
+            display: "flex", flexDirection: "column", position: "relative", minWidth: 0,
+            height: "calc(100vh - 56px)", overflow: "hidden"
           }}>
             {/* CHAT */}
             <div ref={scrollRef} style={{
-              flex: "1 1 0", padding: "23px 0 10px 0", overflowY: "auto",
-              display: "flex", flexDirection: "column"
+              flex: "1 1 0", overflowY: "auto", WebkitOverflowScrolling: "touch",
+              display: "flex", flexDirection: "column", minHeight: 0
             }}>
               <div style={{
                 maxWidth: 750, margin: "0 auto", display: "flex", flexDirection: "column",
@@ -447,7 +647,7 @@ export default function PlanPage() {
                     display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start"
                   }}>
                     <div style={{
-                      maxWidth: "85%", minWidth: 88,
+                      maxWidth: "85vw", minWidth: 88,
                       borderRadius: msg.role === "user" ? "12px 12px 3px 14px" : "11px 12px 13px 3px",
                       boxShadow: msg.role === "user"
                         ? "0 2px 9px rgba(48,182,140,0.09)"
@@ -494,9 +694,9 @@ export default function PlanPage() {
               </div>
             </div>
             {activeId && (
-              <div style={{ padding: "0 14px 14px 14px" }}>
+              <div style={{ padding: "0 14px 27px 14px" }}>
                 <form onSubmit={handleSend} style={{
-                  maxWidth: 750, margin: "0 auto", padding: "10px 12px", borderRadius: 14,
+                  maxWidth: 750, margin: "0 auto", padding: "13px 12px 22px 12px", borderRadius: 14,
                   border: "1.3px solid var(--border)", background: "rgba(16,22,37,0.97)",
                   display: "flex", alignItems: "flex-end", gap: 10,
                   boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
@@ -505,9 +705,9 @@ export default function PlanPage() {
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     placeholder="Type your request, goal or constraint..."
-                    style={{ flex: "1 1 auto", padding: "8px 4px", minHeight: 24, maxHeight: 110,
+                    style={{ flex: "1 1 auto", padding: "9px 4px", minHeight: 28, maxHeight: 110,
                       border: "none", background: "transparent", color: "#ecf8fb", fontSize: 15.4,
-                      fontWeight: 500, boxShadow: "none", resize: "none", lineHeight: 1.45, fontFamily: "inherit",
+                      fontWeight: 500, boxShadow: "none", resize: "none", lineHeight: 1.52, fontFamily: "inherit",
                       outline: "none"
                     }}
                     disabled={sending} rows={1} required
@@ -538,15 +738,10 @@ export default function PlanPage() {
           .mobile-menu-btn { display: flex !important; }
           .app-sidebar {
             position: fixed;
-            left: 0;
-            top: 56px;
-            height: calc(100vh - 56px);
-            z-index: 50;
+            left: 0; top: 56px; height: calc(100vh - 56px); z-index: 50;
             transform: translateX(-100%);
           }
-          .app-sidebar.open {
-            transform: translateX(0);
-          }
+          .app-sidebar.open { transform: translateX(0); }
         }
         @media (max-width:610px) {
           section { border-radius: 0 !important; }
