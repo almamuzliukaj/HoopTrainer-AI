@@ -94,15 +94,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (prompt.length < 40) {
-        return NextResponse.json(
-          {
-            error:
-              "Please add more detail: goal, days/week, level, position, equipment, constraints.",
-          },
-          { status: 400 }
-        );
-      }
+      // NO length restriction! (If you want, add here.)
       messagesArr.push({ role: "user", content: prompt });
     }
 
