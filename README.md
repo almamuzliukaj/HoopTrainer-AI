@@ -17,15 +17,6 @@
 
 ---
 
-## 📸 Screenshots
-
-<div align="center" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-  <img src="public/screenshots/screenshot.png" alt="HoopTrainer AI - Plan Generator" width="340" />
-  <img src="public/screenshots/screenshot2.png" alt="HoopTrainer AI - Day 2/3 and Tips" width="340" />
-</div>
-
----
-
 ## ✨ Features
 
 | Feature | Description |
