@@ -36,7 +36,6 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
     : (email ? email[0].toUpperCase() : "U");
 
   useEffect(() => {
-    // Detect mobile for avatar sizing
     function handleResize() {
       setIsMobile(window.innerWidth <= 570);
     }
@@ -55,7 +54,6 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
 
   return (
     <div ref={ref} style={{ position: "relative", zIndex: 110 }}>
-      {/* Avatar button */}
       <button
         aria-label="Account"
         onClick={() => setOpen(v => !v)}
@@ -100,7 +98,6 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
             animation: "fadeInScale .16s",
           }}
         >
-          {/* User preview styled */}
           <div style={{
             padding: isMobile ? "12px 16px 12px" : "20px 28px 18px",
             display: "flex",
@@ -130,7 +127,7 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
-              minWidth: 0 // forces text to wrap instead of overflow
+              minWidth: 0 
             }}>
               <span style={{
                 fontWeight: 700,
@@ -394,7 +391,7 @@ export default function Dashboard() {
             style={{
               width: "min(1120px, 96vw)",
               margin: "0 auto",
-              padding: "0 0 54px",
+              padding: "0 0 20px", // NDDRYSHIMI 1: Zvogëluam padding-un poshtë
               display: "flex",
               flexDirection: "column",
               gap: 14,
@@ -476,18 +473,30 @@ export default function Dashboard() {
             </section>
 
             {/* ========== CRUD AREA: Your Workouts ========== */}
-            <section>
-              <div className="panel" style={{ display: "grid", gap: 10, padding: "11px 11px", marginTop: 17 }}>
-                <strong style={{ fontSize: 16 }}>My Workouts (CRUD Demo)</strong>
-                <AddWorkoutForm onAdded={() => setListRefresh(r => !r)} />
-                <WorkoutList key={listRefresh ? "A" : "B"} />
+            {/* NDRYSHIMI 2: Rregullimi i panelit CRUD për të qenë responsive */}
+            <section style={{ width: "100%", overflow: "hidden" }}>
+              <div className="panel" style={{ 
+                display: "grid", 
+                gap: 8, 
+                padding: "16px 16px 0px 16px", 
+                marginTop: 17,
+                overflow: "hidden" 
+              }}>
+                <strong style={{ fontSize: 18, borderBottom: "1px solid var(--border)", paddingBottom: "10px" }}>
+                   My Workouts
+                </strong>
+                <div style={{ marginTop: "10px" }}>
+                   <AddWorkoutForm onAdded={() => setListRefresh(r => !r)} />
+                </div>
+                <div style={{ width: "100%" }}>
+                   <WorkoutList key={listRefresh ? "A" : "B"} />
+                </div>
               </div>
             </section>
           </main>
         </div>
         <Footer />
       </div>
-      {/* Media query për më shumë responsive në mobile */}
       <style>{`
         @media (max-width: 570px) {
           nav {
