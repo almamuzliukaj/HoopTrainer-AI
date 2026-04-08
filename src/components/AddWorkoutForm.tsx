@@ -4,31 +4,23 @@ import { supabase } from "@/lib/supabaseClient";
 export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      setError("Session expired");
       setSaving(false);
       return;
     }
-    const { error: insertError } = await supabase
+    await supabase
       .from("workouts")
       .insert([{ user_id: user.id, title, description }]);
-    
-    if (insertError) {
-      setError(insertError.message);
-    } else {
-      setTitle("");
-      setDescription("");
-      onAdded();
-    }
+    setTitle("");
+    setDescription("");
     setSaving(false);
+    onAdded();
   };
 
   return (
@@ -42,17 +34,15 @@ export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
         border: "1px solid var(--border)",
         display: "flex",
         flexDirection: "column",
-        gap: "16px",
-        boxSizing: "border-box" // Siguron që padding mos ta rrisë gjerësinë mbi 100%
+        gap: "16px"
       }}
     >
-      <div style={{ width: "100%" }}>
+      <div>
         <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Title</label>
         <input
           placeholder="Workout name..."
           value={title}
           onChange={e => setTitle(e.target.value)}
-          required
           disabled={saving}
           style={{
             width: '100%',
@@ -67,13 +57,12 @@ export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
         />
       </div>
 
-      <div style={{ width: "100%" }}>
+      <div>
         <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Description</label>
         <textarea
           placeholder="Details..."
           value={description}
           onChange={e => setDescription(e.target.value)}
-          required
           disabled={saving}
           rows={3}
           style={{
@@ -101,12 +90,11 @@ export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
           border: "none",
           fontWeight: 700,
           cursor: "pointer",
-          width: "100%", // Në celular butoni merr plot gjerësinë
-          maxWidth: "200px" // Në desktop qëndron fiks
+          width: "100%",
+          maxWidth: "200px"
         }}>
         {saving ? "Saving..." : "Save Workout"}
       </button>
-      {error && <p style={{ color: "var(--error)", fontSize: "12px" }}>{error}</p>}
     </form>
   );
 }

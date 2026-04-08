@@ -16,17 +16,17 @@ export default function WorkoutItem({ workout, onUpdated }: { workout: Workout; 
 
   const handleUpdate = async () => {
     setSaving(true);
-    await supabase.from("workouts").update({ title, description }).eq("id", workout.id);
+    await supabase
+      .from("workouts")
+      .update({ title, description })
+      .eq("id", workout.id);
     setSaving(false);
     setEditing(false);
     onUpdated();
   };
 
   const handleDelete = async () => {
-    if(!confirm("Are you sure you want to delete this record?")) return;
-    setSaving(true);
     await supabase.from("workouts").delete().eq("id", workout.id);
-    setSaving(false);
     onUpdated();
   };
 
