@@ -4,23 +4,41 @@ import { supabase } from "@/lib/supabaseClient";
 export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setSaving(false);
+    // EDGE 1: Prevent empty
+    if (!title.trim() || !description.trim()) {
+      setError("Title and description are required.");
       return;
     }
-    await supabase
-      .from("workouts")
-      .insert([{ user_id: user.id, title, description }]);
-    setTitle("");
-    setDescription("");
+    // EDGE 2: Prevent double submit
+    if (saving) return;
+    setError("");
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Session expired, please log in again.");
+        setSaving(false);
+        return;
+      }
+      const { error: insertError } = await supabase
+        .from("workouts")
+        .insert([{ user_id: user.id, title, description }]);
+      // EDGE 3: API error
+      if (insertError) setError("Database error: " + insertError.message);
+      else {
+        setTitle("");
+        setDescription("");
+        onAdded();
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    }
     setSaving(false);
-    onAdded();
   };
 
   return (
@@ -95,6 +113,7 @@ export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
         }}>
         {saving ? "Saving..." : "Save Workout"}
       </button>
+      {error && <p style={{ color: "var(--error)" }}>{error}</p>}
     </form>
   );
 }

@@ -181,6 +181,7 @@ export default function PlanPage() {
       }
     }
 
+    // Insert user message right away
     const { error: err1 } = await supabase
       .from("messages").insert([{ conversation_id: convId, role: "user", content: input }]);
     if (err1) { setErr(err1.message); setSending(false); return; }
@@ -197,18 +198,25 @@ export default function PlanPage() {
         body: JSON.stringify({ prompt: promptToSend }),
       });
       let aiMsg = "";
-      if (!res.ok) aiMsg = "AI failed to respond. Try again later.";
-      else {
+      if (!res.ok) {
+        // THIS IS THE FIX: Show backend error message, no supabase insert for AI
+        const data = await res.json();
+        aiMsg = data.error || "AI failed to respond. Try again later.";
+        setErr(aiMsg);
+        showToast(aiMsg);
+        setSending(false);
+        return;
+      } else {
         const data = await res.json();
         aiMsg = data.text || data.html || "AI didn't generate anything.";
+        await supabase.from("messages")
+          .insert([{ conversation_id: convId, role: "ai", content: aiMsg }]);
+        setMessages(ms => [...ms, {
+          id: Math.random().toString(32).slice(2),
+          conversation_id: convId!, role: 'ai', content: aiMsg, created_at: new Date().toISOString()
+        }]);
+        showToast("AI response added");
       }
-      await supabase.from("messages")
-        .insert([{ conversation_id: convId, role: "ai", content: aiMsg }]);
-      setMessages(ms => [...ms, {
-        id: Math.random().toString(32).slice(2),
-        conversation_id: convId!, role: 'ai', content: aiMsg, created_at: new Date().toISOString()
-      }]);
-      showToast("AI response added");
     } catch (e) {
       setErr("Network error");
       showToast("Error sending message.");

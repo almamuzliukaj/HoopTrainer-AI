@@ -94,7 +94,17 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      // NO length restriction! (If you want, add here.)
+      // === KONTROLLI për input të shkurter/pa kuptim ===
+      if (prompt.length < 8 || prompt.split(" ").length < 3) {
+        return NextResponse.json(
+          {
+            error:
+              "Please provide more detailed information about your basketball goals (e.g., number of days, your position, and your specific goal).",
+          },
+          { status: 400 }
+        );
+      }
+      // === END KONTROLLI ===
       messagesArr.push({ role: "user", content: prompt });
     }
 
