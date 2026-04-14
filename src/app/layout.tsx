@@ -14,8 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HoopTrainer AI",
-  description: "Basketball training plans with Supabase Auth",
+  metadataBase: new URL("https://hoop-trainer-ai.vercel.app"),
+  title: {
+    default: "HoopTrainer AI",
+    template: "%s | HoopTrainer AI",
+  },
+  description: "Basketball training plans, workout tracking, and AI-guided coaching for focused player development.",
+  openGraph: {
+    title: "HoopTrainer AI",
+    description: "Basketball training plans, workout tracking, and AI-guided coaching.",
+    siteName: "HoopTrainer AI",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -25,11 +35,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>HoopTrainer AI</title>
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>{children}</AuthProvider>
       </body>

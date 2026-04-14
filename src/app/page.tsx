@@ -1,109 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
-
-// Hamburger menu for auth actions
-function HamburgerMenu() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div ref={ref} style={{ position: "relative", zIndex: 110 }}>
-      <button
-        aria-label="Menu"
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          background: "var(--card-2)",
-          border: "1.5px solid var(--border)",
-          padding: 8,
-          borderRadius: 11,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          boxShadow: open ? "0 4px 22px rgba(77,211,201,0.09)" : "none",
-          outline: "none",
-        }}
-      >
-        {/* Hamburger icon */}
-        <svg width={27} height={27} viewBox="0 0 27 27" fill="none">
-          <rect x="5.5" y="8" width="16" height="2.6" rx="1.3" fill="var(--accent)"/>
-          <rect x="5.5" y="13" width="16" height="2.6" rx="1.3" fill="var(--accent-2)"/>
-          <rect x="5.5" y="18" width="16" height="2.6" rx="1.3" fill="var(--muted)"/>
-        </svg>
-      </button>
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            right: 0,
-            top: 42,
-            background: "var(--card-2)",
-            border: "1.5px solid var(--border)",
-            borderRadius: 14,
-            boxShadow: "0 10px 40px rgba(90,160,255,0.13)",
-            display: "flex",
-            flexDirection: "column",
-            minWidth: 164,
-            zIndex: 101,
-            gap: 2,
-            overflow: "hidden",
-            animation: "fadeInScale .16s",
-          }}
-        >
-          <Link
-            href="/login"
-            style={{
-              color: "var(--text)",
-              background: "none",
-              fontWeight: 700,
-              padding: "13px 22px",
-              fontSize: 15,
-              border: "none",
-              textDecoration: "none",
-              transition: "background .15s",
-              outline: "none",
-              letterSpacing: "0.2px",
-            }}
-            onClick={() => setOpen(false)}
-          >Login</Link>
-          <Link
-            href="/signup"
-            style={{
-              color: "var(--accent-2)",
-              fontWeight: 700,
-              padding: "13px 22px",
-              fontSize: 15,
-              background: "none",
-              border: "none",
-              textDecoration: "none",
-              transition: "background .15s",
-              outline: "none",
-              letterSpacing: "0.2px",
-            }}
-            onClick={() => setOpen(false)}
-          >Create account</Link>
-        </div>
-      )}
-      <style>{`
-        @keyframes fadeInScale {
-          from { opacity: 0; transform: scale(.92);}
-          to { opacity: 1; transform: scale(1);}
-        }
-      `}</style>
-    </div>
-  );
-}
+import BrandMark from "@/components/BrandMark";
+import PublicMenu from "@/components/PublicMenu";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function Page() {
   const navStyle: React.CSSProperties = {
@@ -220,28 +120,9 @@ export default function Page() {
     }}>
       <div className="bg-ball-left" style={{ flex: "1 0 auto", display: "flex", flexDirection: "column", padding: 0 }}>
         <nav style={navStyle}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: 12,
-                background: "linear-gradient(135deg, var(--accent), #3c7be0)",
-                boxShadow: "0 10px 20px rgba(60,123,224,0.35)",
-                display: "grid",
-                placeItems: "center",
-                fontWeight: 900,
-                color: "#0f1524",
-                letterSpacing: 0.4,
-                fontSize: 22,
-              }}
-            >
-              H
-            </div>
-            <span style={{ fontWeight: 800, letterSpacing: 0.6, fontSize: 17 }}>HoopTrainer AI</span>
-          </div>
+          <BrandMark size="md" />
           <div>
-            <HamburgerMenu />
+            <PublicMenu />
           </div>
         </nav>
 
@@ -297,7 +178,7 @@ export default function Page() {
                 <li className="helper">Consistent layout from landing to dashboard</li>
               </ul>
               <div style={{ marginTop: 6, display: "grid", gap: 6 }}>
-                <div className="helper" style={{ fontWeight: 700 }}>Built with: Next.js, Supabase Auth, Vercel AI SDK</div>
+                <div className="helper" style={{ fontWeight: 700 }}>Built with: Next.js, Supabase Auth, and the Groq API through the OpenAI SDK</div>
                 <div className="helper">Save time planning; spend more time training.</div>
               </div>
             </div>
@@ -409,96 +290,7 @@ export default function Page() {
           </section>
         </main>
       </div>
-      {/* FOOTER */}
-      <footer
-        style={{
-          borderTop: "1.6px solid var(--border)",
-          background: "var(--card-2)",
-          color: "var(--muted)",
-          padding: "36px 0 20px",
-          textAlign: "center",
-          fontSize: 15,
-          boxShadow: "0 -1px 18px rgba(20,27,44,0.14)",
-          flexShrink: 0,
-          width: "100%",
-          marginTop: "auto"
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1160,
-            margin: "0 auto",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 22,
-            padding: "0 18px",
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: "center", gap: 9 }}>
-            <span style={{
-              fontWeight: 900,
-              fontSize: 21,
-              color: "var(--accent)",
-              marginRight: 4,
-            }}>H</span>
-            <span style={{
-              fontWeight: 700,
-              fontSize: 17,
-              letterSpacing: 0.2,
-              color: "var(--text)",
-            }}>HoopTrainer AI</span>
-          </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap"
-          }}>
-            <a
-              href="mailto:support@hooptrainer.ai"
-              style={{
-                color: "var(--accent-2)",
-                textDecoration: "none",
-                fontWeight: 700,
-                marginRight: 18,
-                fontSize: 15
-              }}
-            >
-              Support
-            </a>
-            <Link
-              href="/terms"
-              style={{
-                color: "var(--muted)",
-                textDecoration: "none",
-                fontWeight: 500,
-                marginRight: 18,
-                fontSize: 15
-              }}
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              style={{
-                color: "var(--muted)",
-                textDecoration: "none",
-                fontWeight: 500,
-                fontSize: 15
-              }}
-            >
-              Privacy
-            </Link>
-          </div>
-        </div>
-        <div style={{
-          color: "#6b7dab",
-          fontSize: 13,
-          marginTop: 18,
-          letterSpacing: 0.1
-        }}>
-          &copy; {new Date().getFullYear()} HoopTrainer. All rights reserved.
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

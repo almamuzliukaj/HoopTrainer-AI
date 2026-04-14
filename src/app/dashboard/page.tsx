@@ -5,9 +5,10 @@ import Link from "next/link";
 import { Protected } from "@/components/Protected";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-
 import AddWorkoutForm from "@/components/AddWorkoutForm";
 import WorkoutList from "@/components/WorkoutList";
+import BrandMark from "@/components/BrandMark";
+import SiteFooter from "@/components/SiteFooter";
 
 // === HELPER: Get user name/email from Supabase ===
 function useAuthUser() {
@@ -218,40 +219,18 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
 // === Navbar ===
 function Navbar({ onSignOut }: { onSignOut: () => void }) {
   return (
-    <nav style={{
+    <nav className="glass-topbar dashboard-topbar" style={{
       position: "sticky",
       top: 0,
       zIndex: 20,
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      padding: "7px 13px",
-      minHeight: 47,
+      padding: "10px 14px",
+      minHeight: 56,
       marginBottom: 10,
-      borderRadius: 14,
-      background: "rgba(20, 27, 44, 0.92)",
-      backdropFilter: "blur(10px)",
-      border: "1.2px solid var(--border)",
-      boxShadow: "0 10px 26px rgba(0,0,0,0.17)",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            background: "linear-gradient(135deg, var(--accent), #3c7be0)",
-            boxShadow: "0 5px 10px rgba(60,123,224,0.25)",
-            display: "grid",
-            placeItems: "center",
-            fontWeight: 900,
-            color: "#0f1524",
-            letterSpacing: 0.4,
-            fontSize: 17,
-          }}
-        >H</div>
-        <span style={{ fontWeight: 800, letterSpacing: .5, fontSize: 15 }}>HoopTrainer AI</span>
-      </div>
+      <BrandMark size="sm" />
       <AccountMenu onSignOut={onSignOut} />
     </nav>
   );
@@ -259,97 +238,7 @@ function Navbar({ onSignOut }: { onSignOut: () => void }) {
 
 // === Footer ===
 function Footer() {
-  return (
-    <footer
-      style={{
-        borderTop: "1.4px solid var(--border)",
-        background: "var(--card-2)",
-        color: "var(--muted)",
-        padding: "30px 0 16px",
-        textAlign: "center",
-        fontSize: 14.2,
-        boxShadow: "0 -1px 10px rgba(20,27,44,0.12)",
-        flexShrink: 0,
-        width: "100%",
-        marginTop: "auto"
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1160,
-          margin: "0 auto",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 22,
-          padding: "0 12px",
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: "center", gap: 7 }}>
-          <span style={{
-            fontWeight: 900,
-            fontSize: 17,
-            color: "var(--accent)",
-            marginRight: 4,
-          }}>H</span>
-          <span style={{
-            fontWeight: 700,
-            fontSize: 15,
-            letterSpacing: 0.13,
-            color: "var(--text)",
-          }}>HoopTrainer AI</span>
-        </div>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap"
-        }}>
-          <a
-            href="mailto:support@hooptrainer.ai"
-            style={{
-              color: "var(--accent-2)",
-              textDecoration: "none",
-              fontWeight: 700,
-              marginRight: 18,
-              fontSize: 14
-            }}
-          >
-            Support
-          </a>
-          <Link
-            href="/terms"
-            style={{
-              color: "var(--muted)",
-              textDecoration: "none",
-              fontWeight: 500,
-              marginRight: 18,
-              fontSize: 14
-            }}
-          >
-            Terms
-          </Link>
-          <Link
-            href="/privacy"
-            style={{
-              color: "var(--muted)",
-              textDecoration: "none",
-              fontWeight: 500,
-              fontSize: 14
-            }}
-          >
-            Privacy
-          </Link>
-        </div>
-      </div>
-      <div style={{
-        color: "#6b7dab",
-        fontSize: 12,
-        marginTop: 14,
-        letterSpacing: 0.1
-      }}>
-        &copy; {new Date().getFullYear()} HoopTrainer. All rights reserved.
-      </div>
-    </footer>
-  );
+  return <SiteFooter compact />;
 }
 
 // === Dashboard Content ===
@@ -357,7 +246,7 @@ const SNIPPETS = [
   { quote: "The more you sweat in practice, the less you bleed in battle.", tip: "Keep ribcage stacked over hips during sprints." },
   { quote: "Repetition is the mother of learning, the father of action.", tip: "End every drill with 3 perfect reps to lock mechanics." },
   { quote: "Confidence comes from discipline and training.", tip: "Land soft: knees over toes, hips back, chest tall." },
-  { quote: "Success is where preparation and opportunity meet.", tip: "Film 1–2 reps per set; fix one small thing each time." },
+  { quote: "Success is where preparation and opportunity meet.", tip: "Film 1-2 reps per set; fix one small thing each time." },
 ];
 
 export default function Dashboard() {
@@ -377,7 +266,7 @@ export default function Dashboard() {
 
   return (
     <Protected>
-      <div style={{
+      <div className="app-shell" style={{
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -385,9 +274,9 @@ export default function Dashboard() {
       }}>
         <Navbar onSignOut={logout} />
 
-        <div className="bg-ball-left" style={{ flex: "1 0 auto", display: "flex", flexDirection: "column", padding: "0 9px" }}>
+        <div className="page-frame bg-ball-left" style={{ flex: "1 0 auto", display: "flex", flexDirection: "column", padding: "0 9px" }}>
           <main
-            className="responsive-main"
+            className="responsive-main dashboard-main"
             style={{
               width: "min(1120px, 96vw)",
               margin: "0 auto",
@@ -398,33 +287,27 @@ export default function Dashboard() {
               flex: "1 0 auto",
             }}
           >
-            <header style={{ display: "grid", gap: 5, marginTop: 12, marginBottom: 2 }}>
+            <header className="dashboard-hero" style={{ display: "grid", gap: 5, marginTop: 12, marginBottom: 2 }}>
               <p className="helper" style={{ margin: 0 }}>Welcome back</p>
-              <h1 style={{ margin: 0, fontSize: 24 }}>Your training dashboard</h1>
-              <p className="helper" style={{ margin: 0 }}>Quick view of today and your recent sessions.</p>
+              <h1 style={{ margin: 0, fontSize: "clamp(1.9rem, 4vw, 2.5rem)", lineHeight: 1.05 }}>Your training dashboard</h1>
+              <p className="helper" style={{ margin: 0, maxWidth: 620 }}>Quick access to today&apos;s focus, recent momentum, and your personal workout library.</p>
             </header>
 
-            <section
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-                gap: 11,
-              }}
-            >
-              <div className="panel" style={{ display: "grid", gap: 9, padding: "11px 11px" }}>
+            <section className="dashboard-grid">
+              <div className="panel dashboard-panel" style={{ display: "grid", gap: 9, padding: "11px 11px" }}>
                 <strong style={{ fontSize: 16 }}>Today&apos;s session</strong>
                 <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
                   <li className="helper">Warm-up: hips/ankles + bands (8 min)</li>
-                  <li className="helper">Strength: 3×8 RDL @ tempo 3-1-1</li>
+                  <li className="helper">Strength: 3x8 RDL @ tempo 3-1-1</li>
                   <li className="helper">Skill: ball-handling ladder + pull-up series</li>
-                  <li className="helper">Conditioning: shuttle runs 6×20s / 40s rest</li>
+                  <li className="helper">Conditioning: shuttle runs 6x20s / 40s rest</li>
                   <li className="helper">Cool-down: hip flexor + calf stretch (6 min)</li>
                 </ul>
               </div>
 
               <Link
                 href="/plan"
-                className="panel"
+                className="panel dashboard-panel dashboard-panel-accent"
                 style={{
                   display: "grid",
                   gap: 8,
@@ -438,35 +321,35 @@ export default function Dashboard() {
               >
                 <strong style={{ fontSize: 16 }}>AI Generator</strong>
                 <p className="helper" style={{ margin: 0 }}>
-                  Need a different flow? Jump to the generator and tweak focus, time, and gear.
+                  Need a different flow? Jump into the generator and tune focus, time, and equipment.
                 </p>
-                <span style={{ color: "var(--accent)", fontWeight: 700 }}>Open AI Generator →</span>
+                <span style={{ color: "var(--accent)", fontWeight: 700 }}>Open AI Generator -&gt;</span>
               </Link>
 
-              <div className="panel" style={{ display: "grid", gap: 9, padding: "11px 11px" }}>
+              <div className="panel dashboard-panel" style={{ display: "grid", gap: 9, padding: "11px 11px" }}>
                 <strong style={{ fontSize: 16 }}>Quote & micro-tip</strong>
                 <p style={{ margin: "6px 0 0", fontStyle: "italic", color: "var(--text)" }}>
-                  “{SNIPPETS[snippetIndex].quote}”
+                  &quot;{SNIPPETS[snippetIndex].quote}&quot;
                 </p>
                 <p className="helper" style={{ margin: 0, color: "var(--text)" }}>
                   {SNIPPETS[snippetIndex].tip}
                 </p>
               </div>
 
-              <div className="panel" style={{ display: "grid", gap: 9, padding: "11px 11px" }}>
+              <div className="panel dashboard-panel" style={{ display: "grid", gap: 9, padding: "11px 11px" }}>
                 <strong style={{ fontSize: 16 }}>Recent sessions</strong>
                 <div style={{ display: "grid", gap: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div className="dashboard-row" style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ fontWeight: 700 }}>Handles + shooting</span>
-                    <span className="helper">Yesterday · 42 min</span>
+                    <span className="helper">Yesterday - 42 min</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div className="dashboard-row" style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ fontWeight: 700 }}>Lower-body strength</span>
-                    <span className="helper">2 days ago · 50 min</span>
+                    <span className="helper">2 days ago - 50 min</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div className="dashboard-row" style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ fontWeight: 700 }}>Tempo conditioning</span>
-                    <span className="helper">4 days ago · 28 min</span>
+                    <span className="helper">4 days ago - 28 min</span>
                   </div>
                 </div>
               </div>
@@ -475,7 +358,7 @@ export default function Dashboard() {
             {/* ========== CRUD AREA: Your Workouts ========== */}
             {/* NDRYSHIMI 2: Rregullimi i panelit CRUD për të qenë responsive */}
             <section style={{ width: "100%", overflow: "hidden" }}>
-              <div className="panel" style={{ 
+              <div className="panel dashboard-library" style={{ 
                 display: "grid", 
                 gap: 8, 
                 padding: "16px 16px 0px 16px", 
@@ -497,15 +380,6 @@ export default function Dashboard() {
         </div>
         <Footer />
       </div>
-      <style>{`
-        @media (max-width: 570px) {
-          nav {
-            padding: 5px 4px !important;
-            min-height: 39px !important;
-            margin-bottom: 5px !important;
-          }
-        }
-      `}</style>
     </Protected>
   );
 }

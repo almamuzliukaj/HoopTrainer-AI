@@ -4,14 +4,34 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
+type PlayerProfile = {
+  age: string;
+  position: string;
+  level: string;
+  daysPerWeek: string;
+  primaryGoal: string;
+  equipment: string;
+  injuryNotes: string;
+};
+
+const emptyProfile: PlayerProfile = {
+  age: "",
+  position: "",
+  level: "",
+  daysPerWeek: "",
+  primaryGoal: "",
+  equipment: "",
+  injuryNotes: "",
+};
+
 export default function AccountSettingsPage() {
-  // User state
   const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
   const [name, setName] = useState("");
+  const [profile, setProfile] = useState<PlayerProfile>(emptyProfile);
   const [msg, setMsg] = useState<string | null>(null);
+  const [profileMsg, setProfileMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Password section
+  const [profileLoading, setProfileLoading] = useState(false);
   const [pw1, setPw1] = useState("");
   const [pw2, setPw2] = useState("");
   const [pwMsg, setPwMsg] = useState<string | null>(null);
@@ -19,11 +39,21 @@ export default function AccountSettingsPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
+      const nextProfile = user?.user_metadata?.playerProfile ?? {};
       setUser({
         email: user?.email ?? "",
         name: user?.user_metadata?.name ?? "",
       });
       setName(user?.user_metadata?.name ?? "");
+      setProfile({
+        age: nextProfile.age ?? "",
+        position: nextProfile.position ?? "",
+        level: nextProfile.level ?? "",
+        daysPerWeek: nextProfile.daysPerWeek ?? "",
+        primaryGoal: nextProfile.primaryGoal ?? "",
+        equipment: nextProfile.equipment ?? "",
+        injuryNotes: nextProfile.injuryNotes ?? "",
+      });
     });
   }, []);
 
@@ -31,12 +61,36 @@ export default function AccountSettingsPage() {
     e.preventDefault();
     setLoading(true);
     setMsg(null);
-    const { error } = await supabase.auth.updateUser({ data: { name } });
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        name,
+        playerProfile: profile,
+      },
+    });
     setLoading(false);
     if (error) {
       setMsg("Could not update name. Try again.");
     } else {
+      setUser((current) => (current ? { ...current, name } : current));
       setMsg("Name updated.");
+    }
+  };
+
+  const handleProfileChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileLoading(true);
+    setProfileMsg(null);
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        name,
+        playerProfile: profile,
+      },
+    });
+    setProfileLoading(false);
+    if (error) {
+      setProfileMsg("Could not update player profile. Try again.");
+    } else {
+      setProfileMsg("Player profile updated.");
     }
   };
 
@@ -64,31 +118,42 @@ export default function AccountSettingsPage() {
     }
   };
 
+  function updateProfileField<K extends keyof PlayerProfile>(key: K, value: PlayerProfile[K]) {
+    setProfile((current) => ({ ...current, [key]: value }));
+  }
+
   return (
     <div
+      className="app-shell"
       style={{
         minHeight: "100vh",
         background: "none",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-        padding: "60px 14px 30px",
+        padding: "32px 14px 40px",
       }}
     >
       <div
+        className="page-frame account-grid"
         style={{
           width: "100%",
-          maxWidth: 435,
-          borderRadius: 18,
-          background: "var(--card-2)",
-          boxShadow: "0 8px 36px rgba(60,123,224,0.13), 0 1.5px 7px rgba(79,201,189,0.09)",
-          padding: "0",
-          border: "1.5px solid var(--border)",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
+          maxWidth: 980,
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 420px) minmax(0, 1fr)",
+          gap: 18,
+          alignItems: "start",
         }}
       >
+        <div
+          style={{
+            borderRadius: 18,
+            background: "var(--card-2)",
+            boxShadow: "0 8px 36px rgba(60,123,224,0.13), 0 1.5px 7px rgba(79,201,189,0.09)",
+            padding: "0",
+            border: "1.5px solid var(--border)",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
         {/* Sticky top nav for back */}
         <div
           style={{
@@ -288,6 +353,87 @@ export default function AccountSettingsPage() {
             }}>{pwMsg}</div>
           )}
         </form>
+        </div>
+
+        <section
+          className="panel"
+          style={{
+            minHeight: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <div>
+            <div style={{ color: "var(--accent-2)", fontWeight: 800, fontSize: 13, letterSpacing: "0.08em" }}>
+              PLAYER PROFILE
+            </div>
+            <div style={{ fontWeight: 900, fontSize: 24, marginTop: 6 }}>Make every plan athlete-specific</div>
+            <div className="helper" style={{ marginTop: 8, maxWidth: 540 }}>
+              Your AI plans can now adapt to the athlete&apos;s position, level, weekly schedule, goal, and recovery notes.
+            </div>
+          </div>
+
+          <form onSubmit={handleProfileChange} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="account-profile-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14 }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <span style={{ fontWeight: 700 }}>Age</span>
+                <input value={profile.age} onChange={e => updateProfileField("age", e.target.value)} placeholder="16" />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <span style={{ fontWeight: 700 }}>Position</span>
+                <input value={profile.position} onChange={e => updateProfileField("position", e.target.value)} placeholder="Guard, wing, big" />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <span style={{ fontWeight: 700 }}>Level</span>
+                <input value={profile.level} onChange={e => updateProfileField("level", e.target.value)} placeholder="High school varsity" />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <span style={{ fontWeight: 700 }}>Days per week</span>
+                <input value={profile.daysPerWeek} onChange={e => updateProfileField("daysPerWeek", e.target.value)} placeholder="4" />
+              </label>
+            </div>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <span style={{ fontWeight: 700 }}>Primary goal</span>
+              <input
+                value={profile.primaryGoal}
+                onChange={e => updateProfileField("primaryGoal", e.target.value)}
+                placeholder="Explosiveness, first step, shooting off the dribble"
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <span style={{ fontWeight: 700 }}>Equipment access</span>
+              <input
+                value={profile.equipment}
+                onChange={e => updateProfileField("equipment", e.target.value)}
+                placeholder="Full gym, court only, bands, dumbbells"
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <span style={{ fontWeight: 700 }}>Injury or recovery notes</span>
+              <textarea
+                value={profile.injuryNotes}
+                onChange={e => updateProfileField("injuryNotes", e.target.value)}
+                placeholder="Patellar tendon soreness, ankle recovery, no current issues"
+                rows={4}
+                style={{ resize: "vertical" }}
+              />
+            </label>
+
+            <button type="submit" disabled={profileLoading}>
+              {profileLoading ? "Saving profile..." : "Save player profile"}
+            </button>
+
+            {profileMsg && (
+              <div style={{ color: profileMsg.toLowerCase().includes("updated") ? "var(--accent-2)" : "var(--error)", fontWeight: 700 }}>
+                {profileMsg}
+              </div>
+            )}
+          </form>
+        </section>
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { useRef, useEffect, useState } from "react";
 import { Protected } from "@/components/Protected";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import BrandMark from "@/components/BrandMark";
 
 // ========== Toaster =============
 function Toaster({ message, show, onHide }: { message: string; show: boolean; onHide: () => void }) {
@@ -47,35 +49,17 @@ function Toaster({ message, show, onHide }: { message: string; show: boolean; on
 // ===== NAVBAR =====
 function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <nav style={{
+    <nav className="glass-topbar plan-topbar" style={{
       position: "sticky", top: 0, zIndex: 30,
       display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "0 1rem", minHeight: 56, background: "rgba(24,31,49,0.98)",
-      borderBottom: "1.7px solid var(--border)", boxShadow: "0 6px 18px rgba(36,58,90,0.12)"
+      padding: "10px 14px", minHeight: 56
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <button className="mobile-menu-btn" onClick={onMenuClick} style={{
           background: "transparent", border: "none", color: "white",
           fontSize: 16, cursor: "pointer", padding: "4px 6px", display: "none", alignItems: "center"
         }}>☰</button>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: "linear-gradient(135deg, var(--accent), #3c7be0)",
-            boxShadow: "0 6px 18px rgba(60,123,224,0.15)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontWeight: 900, color: "#0f1524", fontSize: 17,
-          }}>H</div>
-          <span style={{
-            fontWeight: 800, letterSpacing: 0.33, fontSize: 17.2, color: "white", display: "flex",
-            alignItems: "baseline", gap: "3px"
-          }}>
-            HoopTrainer
-            <span style={{
-              color: "var(--accent-2)", fontWeight: 900, fontSize: "17.2px", marginLeft: "2.5px"
-            }}>AI</span>
-          </span>
-        </div>
+        <BrandMark size="sm" />
       </div>
       <Link href="/dashboard" style={{
         padding: "7px 18px", borderRadius: 8, border: "1.3px solid var(--accent-2)",
@@ -89,6 +73,46 @@ function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 
 type Conversation = { id: string; title: string; user_id?: string; created_at?: string };
 type Message = { id: string; conversation_id: string; role: "user" | "ai"; content: string; created_at?: string };
+type ApiChatMessage = { role: "user" | "assistant"; content: string };
+type PlayerProfile = {
+  age?: string;
+  position?: string;
+  level?: string;
+  daysPerWeek?: string;
+  primaryGoal?: string;
+  equipment?: string;
+  injuryNotes?: string;
+};
+
+const markdownComponents = {
+  p: ({ children }: { children?: React.ReactNode }) => (
+    <p style={{ margin: "0 0 0.7rem", lineHeight: 1.7 }}>{children}</p>
+  ),
+  ul: ({ children }: { children?: React.ReactNode }) => (
+    <ul style={{ margin: "0.4rem 0 0.75rem", paddingLeft: "1.25rem" }}>{children}</ul>
+  ),
+  ol: ({ children }: { children?: React.ReactNode }) => (
+    <ol style={{ margin: "0.4rem 0 0.75rem", paddingLeft: "1.25rem" }}>{children}</ol>
+  ),
+  li: ({ children }: { children?: React.ReactNode }) => (
+    <li style={{ marginBottom: "0.35rem" }}>{children}</li>
+  ),
+  strong: ({ children }: { children?: React.ReactNode }) => (
+    <strong style={{ color: "#f6fcff" }}>{children}</strong>
+  ),
+  code: ({ children }: { children?: React.ReactNode }) => (
+    <code
+      style={{
+        background: "rgba(255,255,255,0.08)",
+        padding: "0.15rem 0.35rem",
+        borderRadius: 6,
+        fontSize: "0.92em",
+      }}
+    >
+      {children}
+    </code>
+  ),
+};
 
 export default function PlanPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -99,11 +123,13 @@ export default function PlanPage() {
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Modal and toast state
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
   const [isRenameModal, setIsRenameModal] = useState(false);
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -129,6 +155,7 @@ export default function PlanPage() {
       setLoadingConvs(true); setErr(null);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setConversations([]); setLoadingConvs(false); setErr("Not logged in!"); return; }
+      setPlayerProfile((user.user_metadata?.playerProfile as PlayerProfile | undefined) ?? {});
       const { data, error } = await supabase
         .from("conversations").select("*").eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -192,10 +219,21 @@ export default function PlanPage() {
     const promptToSend = input;
     setInput("");
     try {
+      const apiMessages: ApiChatMessage[] = [...messages, {
+        id: Math.random().toString(32).slice(2),
+        conversation_id: convId!,
+        role: "user",
+        content: promptToSend,
+        created_at: new Date().toISOString(),
+      }].map((message) => ({
+        role: message.role === "ai" ? "assistant" : "user",
+        content: message.content,
+      }));
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptToSend }),
+        body: JSON.stringify({ messages: apiMessages, profile: playerProfile }),
       });
       let aiMsg = "";
       if (!res.ok) {
@@ -217,7 +255,7 @@ export default function PlanPage() {
         }]);
         showToast("AI response added");
       }
-    } catch (e) {
+    } catch {
       setErr("Network error");
       showToast("Error sending message.");
     } finally {
@@ -248,6 +286,7 @@ export default function PlanPage() {
   async function doRename(id: string, value: string) {
     setIsRenameModal(false);
     setActionMenuId(null);
+    setRenameTargetId(null);
     const name = value.trim();
     if (!name) return;
     const { data: { user } } = await supabase.auth.getUser();
@@ -268,6 +307,7 @@ export default function PlanPage() {
     setConfirmDeleteId(null);
     setActionMenuId(null);
     setIsRenameModal(false);
+    setRenameTargetId(null);
     setErr(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErr("Not logged in!"); showToast("Not logged in."); return; }
@@ -296,6 +336,7 @@ export default function PlanPage() {
         setActionMenuId(null);
         setConfirmDeleteId(null);
         setShowNewChatModal(false);
+        setRenameTargetId(null);
       }
     }
     if (actionMenuId || isRenameModal || confirmDeleteId || showNewChatModal) {
@@ -415,7 +456,12 @@ export default function PlanPage() {
             textShadow: "0px 2px 16px #1861494d"
           }}>{displayName}</div>
           <button
-            onClick={() => { setIsRenameModal(true); setActionMenuId(null); setRenameValue(displayName); }}
+            onClick={() => {
+              setRenameTargetId(c.id);
+              setIsRenameModal(true);
+              setActionMenuId(null);
+              setRenameValue(displayName);
+            }}
             style={{
               background: "#1e283a", color: "#baf7ea", border: "none",
               borderRadius: 7, fontWeight: 900, fontSize: 16, padding: "13px 3px", marginBottom: 4,
@@ -442,12 +488,11 @@ export default function PlanPage() {
 
   function renderRenameModal() {
     if (!isRenameModal) return null;
-    const c = conversations.find(x => x.id === activeId);
     return (
       <>
         <div style={{
           position: "fixed", inset: 0, zIndex: 2001, background: "rgba(20,32,48,0.56)"
-        }} onClick={() => setIsRenameModal(false)}/>
+        }} onClick={() => { setIsRenameModal(false); setRenameTargetId(null); }}/>
         <div style={{
           position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
           zIndex: 2002, background: "#222a36", boxShadow: "0 10px 38px -8px #121b26", borderRadius: 18,
@@ -466,17 +511,17 @@ export default function PlanPage() {
               padding: "12px 10px", fontSize: 15, borderRadius: 10, border: "1.5px solid #29f1d1",
               background: "#1a2448", color: "#d4ffe1", fontWeight: 700, marginBottom: 6, outline: "none", minWidth: 210
             }}
-            onKeyDown={(e) => { if (e.key === "Enter") doRename(activeId!, renameValue); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && renameTargetId) doRename(renameTargetId, renameValue); }}
           />
           <div style={{ display: "flex", gap: 16 }}>
             <button
-              onClick={() => doRename(activeId!, renameValue)}
+              onClick={() => renameTargetId && doRename(renameTargetId, renameValue)}
               style={{
                 padding: "8px 26px", background: "linear-gradient(135deg, #15f7c1 80%, #168ad1 120%)",
                 border: "none", borderRadius: 8, color: "#003d37", fontWeight: 900, fontSize: 15
               }}>Rename</button>
             <button
-              onClick={() => setIsRenameModal(false)}
+              onClick={() => { setIsRenameModal(false); setRenameTargetId(null); }}
               style={{
                 padding: "8px 20px", background: "#1f2326",
                 border: "none", borderRadius: 8, color: "#7bc8ce", fontWeight: 800, fontSize: 15
@@ -537,7 +582,7 @@ export default function PlanPage() {
   function renderConversationRow(c: Conversation) {
     const displayName = c.title?.trim() ? c.title : "Untitled";
     const isActive = activeId === c.id;
-    function handleTouchStart(e: React.TouchEvent) {
+    function handleTouchStart() {
       if (holdTimer.current) clearTimeout(holdTimer.current);
       holdTimer.current = setTimeout(() => { setActionMenuId(c.id); }, 500);
     }
@@ -546,6 +591,7 @@ export default function PlanPage() {
     return (
       <div
         key={c.id}
+        className={`plan-conversation-row${isActive ? " is-active" : ""}`}
         style={{
           display: "flex", alignItems: "center", background: isActive ? "rgba(48,189,186, 0.15)" : "transparent",
           border: isActive ? "1.5px solid var(--accent-2)" : "1.5px solid transparent",
@@ -565,6 +611,7 @@ export default function PlanPage() {
         <div style={{ position: "relative", zIndex: 65 }}>
           <button
             onClick={e => { e.stopPropagation(); setActionMenuId(c.id); }}
+            className="plan-conversation-more"
             style={{
               background: "none", border: "none", color: isActive ? "var(--accent-2)" : "#6b7dab",
               fontSize: 18, cursor: "pointer", padding: "0 4px", lineHeight: 1
@@ -577,6 +624,13 @@ export default function PlanPage() {
     );
   }
 
+  const profileHighlights = [
+    playerProfile.position ? `Position: ${playerProfile.position}` : null,
+    playerProfile.level ? `Level: ${playerProfile.level}` : null,
+    playerProfile.primaryGoal ? `Goal: ${playerProfile.primaryGoal}` : null,
+    playerProfile.daysPerWeek ? `Days/week: ${playerProfile.daysPerWeek}` : null,
+  ].filter(Boolean) as string[];
+
   return (
     <Protected>
       <Toaster message={toasterMsg} show={toasterShow} onHide={() => setToasterShow(false)} />
@@ -585,23 +639,23 @@ export default function PlanPage() {
       {renderDeleteConfirmModal()}
       {renderNewChatModal()}
       <SidebarOverlay />
-      <div style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
+      <div className="app-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
         <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <div style={{
+        <div className="page-frame plan-shell" style={{
           display: "flex", alignItems: "stretch",
           height: "calc(100vh - 56px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative"
         }}>
-          <aside className={`app-sidebar ${isSidebarOpen ? "open" : ""}`} style={{
+          <aside className={`app-sidebar plan-sidebar ${isSidebarOpen ? "open" : ""}`} style={{
             flex: "0 0 240px", maxWidth: 340, minWidth: 240,
             background: "rgba(17,23,38,0.993)", borderRadius: "14px 0 0 14px",
             boxShadow: "0 4px 29px rgba(26,189,155,0.07)",
             padding: "19px 12px 8px 17px", borderRight: "1.4px solid var(--border)",
             overflowY: "auto", display: "flex", flexDirection: "column", gap: 0, transition: "transform 0.3s ease"
           }}>
-            <div style={{
+            <div className="plan-sidebar-header" style={{
               marginBottom: 20, display: "flex", alignItems: "center", gap: 9, justifyContent: "space-between"
             }}>
-              <span style={{
+              <span className="plan-sidebar-title" style={{
                 fontWeight: 900, fontSize: 21, color: 'var(--accent-2)',
                 letterSpacing: '.06em', marginLeft: 2
               }}>Recents</span>
@@ -618,18 +672,65 @@ export default function PlanPage() {
                   <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> New
               </button>
             </div>
+            <div className="plan-profile-card" style={{
+              marginBottom: 16,
+              padding: "14px 14px 13px",
+              borderRadius: 16,
+              background: "linear-gradient(160deg, rgba(77,211,201,0.12), rgba(60,123,224,0.08))",
+              border: "1px solid rgba(77,211,201,0.22)",
+              boxShadow: "0 10px 24px rgba(0,0,0,0.16)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 11.5, letterSpacing: "0.08em", fontWeight: 800, color: "var(--accent-2)" }}>
+                    PLAYER PROFILE
+                  </div>
+                  <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 4 }}>AI context</div>
+                </div>
+                <Link href="/account" style={{ width: "auto", fontSize: 12.5, fontWeight: 800, color: "var(--accent-2)" }}>
+                  Edit
+                </Link>
+              </div>
+              {profileHighlights.length > 0 ? (
+                <div className="plan-profile-grid" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                  {profileHighlights.map((item) => (
+                    <span
+                      key={item}
+                      className="plan-profile-chip"
+                      style={{
+                        display: "inline-flex",
+                        width: "auto",
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        background: "rgba(9,15,25,0.34)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "#d9f7f3",
+                        fontSize: 12.3,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="helper" style={{ marginTop: 10, lineHeight: 1.5 }}>
+                  Add your player profile so the AI can tailor workouts to the athlete.
+                </div>
+              )}
+            </div>
             {loadingConvs && <div style={{ color: "var(--muted)", marginLeft: 2 }}>Loading…</div>}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="plan-conversation-list" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {conversations.map(c => renderConversationRow(c))}
             </div>
             {!loadingConvs && conversations.length === 0 && (
-              <div style={{
+              <div className="plan-empty-state" style={{
                 color: "var(--muted)", fontWeight: 500, padding: "20px 4px 8px", textAlign: "center", fontSize: 14.2
-              }}>No chat history yet.</div>
+              }}>No chat history yet. Start a new chat and build your first training thread.</div>
             )}
           </aside>
           {/* === CHAT PANEL === */}
-          <section style={{
+          <section className="plan-chat-panel" style={{
             flex: 1,
             background: "linear-gradient(128deg,#191f2b 50%,#222b38 98%)",
             borderRadius: "0 14px 14px 0",
@@ -638,11 +739,11 @@ export default function PlanPage() {
             height: "calc(100vh - 56px)", overflow: "hidden"
           }}>
             {/* CHAT */}
-            <div ref={scrollRef} style={{
+            <div ref={scrollRef} className="plan-scroll" style={{
               flex: "1 1 0", overflowY: "auto", WebkitOverflowScrolling: "touch",
               display: "flex", flexDirection: "column", minHeight: 0
             }}>
-              <div style={{
+              <div className="plan-message-wrap" style={{
                 maxWidth: 750, margin: "0 auto", display: "flex", flexDirection: "column",
                 gap: 13, padding: "7px 16px", width: "100%"
               }}>
@@ -654,7 +755,7 @@ export default function PlanPage() {
                   <div key={msg.id} style={{
                     display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start"
                   }}>
-                    <div style={{
+                    <div className={`plan-bubble ${msg.role === "user" ? "plan-bubble-user" : "plan-bubble-ai"}`} style={{
                       maxWidth: "85vw", minWidth: 88,
                       borderRadius: msg.role === "user" ? "12px 12px 3px 14px" : "11px 12px 13px 3px",
                       boxShadow: msg.role === "user"
@@ -670,7 +771,7 @@ export default function PlanPage() {
                       fontSize: 14.8, fontWeight: 500, lineHeight: 1.59, letterSpacing: ".01em",
                       transition: "background 0.13s"
                     }}>
-                      <div style={{
+                      <div className="plan-bubble-meta" style={{
                         display: "flex", alignItems: "center", gap: 7, marginBottom: 3,
                         color: msg.role === "user" ? "#011a19" : "var(--accent-2)",
                         fontWeight: 700, fontSize: 12
@@ -680,12 +781,25 @@ export default function PlanPage() {
                           color: "#89b1ba", fontWeight: 500, fontSize: 11.4, marginLeft: 5
                         }}>{msg.created_at ? new Date(msg.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                       </div>
-                      <span
-                        style={{ fontSize: 14.8, fontFamily: "inherit", display: "inline-block", wordBreak: "break-word" }}
-                        dangerouslySetInnerHTML={{
-                          __html: msg.content.replace(/\n/g, "<br>")
-                        }}
-                      />
+                      {msg.role === "ai" ? (
+                        <div style={{ fontSize: 14.8, wordBreak: "break-word" }}>
+                          <ReactMarkdown components={markdownComponents}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            fontSize: 14.8,
+                            fontFamily: "inherit",
+                            display: "inline-block",
+                            wordBreak: "break-word",
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {msg.content}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -702,8 +816,8 @@ export default function PlanPage() {
               </div>
             </div>
             {activeId && (
-              <div style={{ padding: "0 14px 27px 14px" }}>
-                <form onSubmit={handleSend} style={{
+              <div className="plan-input-shell" style={{ padding: "0 14px 27px 14px" }}>
+                <form className="plan-composer" onSubmit={handleSend} style={{
                   maxWidth: 750, margin: "0 auto", padding: "13px 12px 22px 12px", borderRadius: 14,
                   border: "1.3px solid var(--border)", background: "rgba(16,22,37,0.97)",
                   display: "flex", alignItems: "flex-end", gap: 10,
@@ -737,6 +851,9 @@ export default function PlanPage() {
                       stroke="#08514a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                 </form>
+                <div className="plan-composer-helper" style={{ maxWidth: 750, margin: "10px auto 0", color: "var(--muted)", fontSize: 12.8, lineHeight: 1.5 }}>
+                  Tip: include the athlete&apos;s goal, number of training days, equipment, and any recovery limits for sharper plans.
+                </div>
               </div>
             )}
           </section>
@@ -752,8 +869,9 @@ export default function PlanPage() {
           .app-sidebar.open { transform: translateX(0); }
         }
         @media (max-width:610px) {
-          section { border-radius: 0 !important; }
-          nav { padding:0 8px!important; min-height:48px!important;}
+          .plan-chat-panel { border-radius: 18px !important; }
+          .plan-topbar { padding: 8px 10px !important; min-height: 52px !important; }
+          .plan-shell { height: auto !important; min-height: calc(100vh - 56px); }
         }
         `}</style>
       </div>
