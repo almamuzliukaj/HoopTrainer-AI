@@ -1,255 +1,272 @@
-<div align="center">
+# HoopTrainer AI
 
-# 🏀 HoopTrainer AI
+HoopTrainer AI is a full-stack basketball training web app that combines AI-generated practice planning, workout tracking, and player-specific personalization in one product.
 
-**AI-powered basketball training assistant** — chat with an AI coach to get personalized multi-day training plans, log and manage your own workouts, and track your progress, all in one sleek app.
+The app is built for players who want structured basketball development instead of generic fitness plans. Users can sign in, manage their own workout library, chat with an AI coach, save conversation history, and personalize training plans with a player profile.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20DB-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Groq](https://img.shields.io/badge/Groq-Llama_3.3-F54D27?logo=meta&logoColor=white)](https://groq.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## What The Project Does
 
-### 🚀 [Live Demo on Vercel](https://hoop-trainer-ai.vercel.app)
+- Generates basketball-specific training plans with an AI coach
+- Saves multi-turn chat conversations to the user account
+- Lets users create, edit, and delete their own workouts
+- Provides a protected dashboard and account settings area
+- Personalizes AI plans using a saved player profile
+- Includes responsive layouts for landing, dashboard, account, and plan pages
 
-</div>
+## Current Features
 
----
+### Authentication
 
-## ✨ Features
+- Email and password signup
+- Email and password login
+- Protected routes for authenticated users
+- Session handling through Supabase Auth
 
-| Feature | Description |
-|---|---|
-| 🧠 **AI Chat Interface** | Full conversational chat UI — send prompts, get structured AI responses, continue conversations, all saved to your account |
-| 📚 **Conversation History** | Sidebar lists all your past chats; switch between them instantly, auto-titled from your first message |
-| ✏️ **Rename & Delete Chats** | Right-click (desktop) or long-press (mobile) any conversation to rename or delete it with confirmation |
-| 🏋️ **My Workouts (CRUD)** | Log your own workouts with a title and notes; edit or delete any entry from your personal library |
-| 👤 **Account Settings** | Update your display name and change your password from a dedicated settings page |
-| 🔐 **Secure Auth** | Email/password authentication powered by Supabase — protected routes, persistent session management |
-| 🏀 **Basketball-Specific AI** | AI combines on-court drills (ball-handling, shooting, finishing) with plyometrics, strength & conditioning |
-| 📝 **Markdown Rendering** | Clean, formatted AI output with Day headings, bullet lists, sets/reps, and coaching tips |
-| 📊 **Player Dashboard** | Motivational quotes & micro-tips that rotate every 20 seconds, today's session overview, and recent session recap |
-| 🎨 **Dark Theme UI** | Sleek dark navy and cyan color palette with basketball-inspired watermark background |
-| 📱 **Responsive Design** | Mobile-first layout — sticky navbar, collapsible sidebar, and adaptive account menu for all screen sizes |
-| 🛡️ **Error Handling** | Validates empty inputs, handles API and network errors gracefully, with toast notifications for all actions |
+### Landing And Navigation
 
----
+- Marketing landing page with product messaging
+- Shared brand components and shared footer
+- Dedicated Terms and Privacy pages
+- Reusable public menu for auth actions
 
-## 🔄 Recent Changes
+### Dashboard
 
-### Chat Interface Redesign (`/plan`)
-- Replaced the single-form plan generator with a **full multi-turn chat interface** backed by Supabase
-- **Conversations sidebar** lists all past chats, highlighted active conversation, and a "New Chat" button
-- **Auto-titling**: the first message in a conversation automatically becomes the conversation title
-- **Rename**: click ⋮ → Rename Conversation (modal with keyboard support)
-- **Delete**: click ⋮ → Delete → confirmation modal before permanent removal
-- Mobile: sidebar is collapsible via a ☰ hamburger button; long-press on a conversation row opens the action menu
-- **Sticky navbar and sticky input bar** — the chat stays usable even on long message threads
-- **Toast notifications** for all async actions (chat created, renamed, deleted, AI response received)
-- Fixed state sync bugs where rename/delete would not immediately reflect in the sidebar without a page reload
+- Protected training dashboard
+- Quick link into the AI planner
+- Motivational quote and tip rotation
+- Recent session summary cards
+- Workout library area with CRUD support
 
-### Workout Library (`/dashboard`)
-- New **"My Workouts"** panel on the dashboard with full CRUD backed by Supabase `workouts` table
-- **AddWorkoutForm** — title + description fields, saves directly to Supabase, clears on success
-- **WorkoutList** — fetches the user's workouts ordered by newest first, shows a count badge
-- **WorkoutItem** — inline edit mode (click Edit → modify title/description → Save Changes or Cancel) and delete with a browser confirmation
-- Responsive: form and cards adapt to mobile widths, no horizontal overflow
+### Workout Management
 
-### Account Settings (`/account`)
-- New dedicated **Account Settings page** linked from the account dropdown
-- Update **display name** (stored in Supabase user metadata)
-- **Change password** with validation (min 6 chars, passwords must match)
-- Sticky back-to-dashboard header; avatar initial shown in the profile card
+- Add workouts
+- Edit workouts
+- Delete workouts
+- Save workouts to Supabase per user
 
-### Account Dropdown Menu (Dashboard)
-- **Avatar button** in the navbar shows your first initial (name or email fallback)
-- Dropdown shows your full name and email, links to Account Settings, and a styled Sign Out button
-- Click outside to dismiss; scales responsively for mobile viewports
+### AI Planner
 
-### Professional Dashboard Layout
-- Responsive CSS grid with 4 panels: Today's Session, AI Generator quick-link, Quote & Micro-tip, Recent Sessions
-- Quote rotates every 20 seconds (down from 25)
-- Sticky navbar with blur backdrop, footer with Support / Terms / Privacy links
+- Multi-turn chat interface at `/plan`
+- Conversation history saved in Supabase
+- New chat creation
+- Rename chat
+- Delete chat
+- Mobile sidebar support
+- Markdown rendering for AI responses
+- Toast feedback for key actions
 
----
+### Player Profile Personalization
 
-## 🛠️ Tech Stack
+- Account settings page for player details
+- Save:
+  - age
+  - position
+  - level
+  - days per week
+  - primary goal
+  - equipment access
+  - injury or recovery notes
+- Player profile is shown in the planner sidebar
+- Player profile is sent to the AI route so plans can be personalized
 
-| Category | Technology |
-|---|---|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
-| **Language** | [TypeScript 5](https://www.typescriptlang.org/) |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) |
-| **AI / LLM** | [Groq API](https://groq.com/) — `llama-3.3-70b-versatile` via OpenAI-compatible SDK |
-| **Authentication & DB** | [Supabase](https://supabase.com/) — Auth, `conversations`, `messages`, and `workouts` tables |
-| **Markdown** | [react-markdown](https://github.com/remarkjs/react-markdown) |
-| **Deployment** | [Vercel](https://vercel.com/) |
+## Tech Stack
 
----
+- Next.js 16 with App Router
+- React 19
+- TypeScript
+- Supabase
+  - Authentication
+  - Database
+- OpenAI SDK
+  - used against the Groq OpenAI-compatible API
+- react-markdown
+- Custom global CSS design system
 
-## 📁 Project Structure
+## Architecture Overview
 
+### Frontend
+
+- `src/app/page.tsx`
+  - landing page
+- `src/app/dashboard/page.tsx`
+  - protected dashboard
+- `src/app/plan/page.tsx`
+  - AI planner chat interface
+- `src/app/account/page.tsx`
+  - account settings and player profile
+- `src/app/login/page.tsx`
+  - login page
+- `src/app/signup/page.tsx`
+  - signup page
+- `src/app/terms/page.tsx`
+  - terms page
+- `src/app/privacy/page.tsx`
+  - privacy page
+
+### Shared Components
+
+- `src/components/BrandMark.tsx`
+- `src/components/PublicMenu.tsx`
+- `src/components/SiteFooter.tsx`
+- `src/components/DashboardTopBar.tsx`
+- `src/components/Protected.tsx`
+- `src/components/AddWorkoutForm.tsx`
+- `src/components/WorkoutList.tsx`
+- `src/components/WorkoutItem.tsx`
+
+### Backend
+
+- `src/app/api/generate/route.ts`
+  - receives planner requests
+  - validates input
+  - injects system instructions
+  - includes player profile context when available
+  - calls the Groq-hosted model through the OpenAI SDK
+
+### Data Layer
+
+- `src/lib/supabaseClient.ts`
+  - Supabase client setup
+- `src/context/AuthContext.tsx`
+  - global auth state
+
+## Database Tables
+
+The app currently expects these Supabase tables:
+
+### `conversations`
+
+- `id`
+- `user_id`
+- `title`
+- `created_at`
+
+Stores each saved AI chat thread.
+
+### `messages`
+
+- `id`
+- `conversation_id`
+- `role`
+- `content`
+- `created_at`
+
+Stores individual messages for each conversation.
+
+### `workouts`
+
+- `id`
+- `user_id`
+- `title`
+- `description`
+- `created_at`
+
+Stores user-created workout entries.
+
+## Design Direction
+
+The project currently uses a custom dark visual system with:
+
+- glass-style top bars
+- shared layout shells
+- dashboard panel styling
+- responsive planner sidebar and chat layout
+- reusable footer and brand treatment
+
+The app does not currently rely on Tailwind utility classes for its UI styling. Most styling is handled through `src/app/globals.css` and page-level inline styles.
+
+## Professional Improvements Already Added
+
+These are some of the bigger cleanup steps already completed:
+
+- replaced unsafe AI message HTML rendering with markdown rendering
+- upgraded the planner from single-prompt behavior to multi-turn conversation history
+- added shared brand, footer, and menu components
+- improved dashboard and planner responsiveness
+- added real Terms and Privacy pages
+- introduced a first real product feature through player profile personalization
+
+## Environment Variables
+
+Create a `.env.local` file in the root of the project:
+
+```env
+GROQ_API_KEY=your_groq_api_key
+GROQ_API_BASE=https://api.groq.com/openai/v1
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
-HoopTrainer-AI/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx              # Landing / welcome page
-│   │   ├── layout.tsx            # Root layout with Auth provider
-│   │   ├── globals.css           # Global dark-theme styles
-│   │   ├── api/
-│   │   │   └── generate/
-│   │   │       └── route.ts      # POST /api/generate — Groq chat completion
-│   │   ├── plan/
-│   │   │   └── page.tsx          # AI Chat interface (conversations + messages)
-│   │   ├── dashboard/
-│   │   │   └── page.tsx          # Protected player dashboard + My Workouts CRUD
-│   │   ├── account/
-│   │   │   └── page.tsx          # Account settings (name + password)
-│   │   ├── login/
-│   │   │   └── page.tsx          # Login form (Supabase auth)
-│   │   └── signup/
-│   │       └── page.tsx          # Sign-up form (Supabase auth)
-│   ├── components/
-│   │   ├── AddWorkoutForm.tsx     # Form to add a new workout entry
-│   │   ├── WorkoutList.tsx        # Fetches and renders the user's workout library
-│   │   ├── WorkoutItem.tsx        # Single workout card with inline edit + delete
-│   │   ├── AuthForm.tsx           # Reusable authentication form
-│   │   └── Protected.tsx          # Route-protection wrapper
-│   ├── context/
-│   │   └── AuthContext.tsx       # Global auth state (Supabase session)
-│   └── lib/
-│       └── supabaseClient.ts     # Supabase client initialization
-├── public/
-│   └── screenshots/              # App UI screenshots
-├── docs/                         # Additional documentation
-├── .env.local                    # Environment variables (not committed)
-├── package.json
-└── next.config.ts
-```
 
----
+## Getting Started
 
-## 🗄️ Supabase Database Tables
-
-| Table | Columns | Description |
-|---|---|---|
-| `conversations` | `id`, `user_id`, `title`, `created_at` | One row per AI chat thread |
-| `messages` | `id`, `conversation_id`, `role`, `content`, `created_at` | Each message in a conversation (`role`: `user` or `ai`) |
-| `workouts` | `id`, `user_id`, `title`, `description`, `created_at` | User-logged personal workout entries |
-
----
-
-## ⚙️ Prerequisites
-
-- **Node.js** 18 or later
-- A **[Groq](https://console.groq.com/)** account and API key
-- A **[Supabase](https://supabase.com/)** project (URL + anon key) with the three tables above created
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/almamuzliukaj/HoopTrainer-AI.git
-cd HoopTrainer-AI
-```
-
-### 2. Install dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
-
-Create a `.env.local` file in the project root:
-
-```env
-# Groq AI
-GROQ_API_KEY=your_groq_api_key_here
-GROQ_API_BASE=https://api.groq.com/openai/v1
-
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-> **Never commit `.env.local` to version control.** It is already listed in `.gitignore`.
-
-### 4. Start the development server
+### 2. Run the development server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Then open:
 
----
+```text
+http://localhost:3000
+```
 
-## 🏋️ Usage
+## Available Scripts
 
-1. **Create an account** or log in via the Sign-up / Login pages.
-2. From the **Dashboard**, explore your training overview and manage your **Workout Library**.
-3. Click **AI Generator** (or navigate to `/plan`) to open the **Chat Interface**.
-4. Type a training request, for example:
+```bash
+npm run dev
+npm run build
+npm start
+npm run lint
+```
 
-   > *"3-day plan for a guard, goal: explosiveness and speed, intermediate level, age 20"*
+## Example Use Case
 
-5. Press **Enter** or **Send** — the AI coach responds with a structured multi-day plan.
-6. Continue the conversation to refine the plan, or create a **New Chat** for a fresh topic.
-7. Access **Account Settings** from the avatar dropdown to update your name or password.
+A player can:
 
----
+1. Create an account
+2. Fill in a player profile in account settings
+3. Open the AI planner
+4. Ask for something like:
 
-## 🖥️ Available Scripts
+```text
+Give me a 3-day guard workout plan focused on first-step speed and finishing. I have access to a court, dumbbells, and bands.
+```
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start the local development server |
-| `npm run build` | Build the application for production |
-| `npm start` | Run the production build |
-| `npm run lint` | Run ESLint across the codebase |
+5. Receive a more personalized basketball plan based on both the prompt and the saved profile
+6. Save personal workouts separately in the dashboard
 
----
+## Current Project Status
 
-## 🌍 Deployment
+This project is currently in a strong MVP stage.
 
-HoopTrainer AI is deployed on **[Vercel](https://vercel.com/)**: **[https://hoop-trainer-ai.vercel.app](https://hoop-trainer-ai.vercel.app)**
+It already has:
 
-To deploy your own instance:
+- a clear niche
+- real user accounts
+- persisted AI conversations
+- workout CRUD
+- legal pages
+- shared UI components
+- player profile personalization
 
-1. Push your repository to GitHub.
-2. Import the project on [vercel.com/new](https://vercel.com/new).
-3. Add all required environment variables in the Vercel dashboard (Settings → Environment Variables).
-4. Deploy — Vercel auto-detects Next.js and handles the build.
+The next major professional steps would likely be:
 
-Any other Next.js-compatible hosting platform (AWS Amplify, Railway, Render, etc.) also works.
+- onboarding flow for first-time users
+- structured saved training plans
+- progress tracking
+- calendar or scheduling support
+- stronger test coverage
+- more reusable design primitives
 
----
+## Repository Summary
 
-## 🤝 Contributing
+If someone asks what this project is today, the short answer is:
 
-Contributions are welcome! To get started:
-
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature/your-feature-name`
-3. Make your changes and commit: `git commit -m 'feat: add your feature'`
-4. Push to your fork: `git push origin feature/your-feature-name`
-5. Open a Pull Request.
-
-Please ensure your code passes linting (`npm run lint`) before submitting.
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-<div align="center">
-  Built with ❤️ for ballers who take their game seriously.
-</div>
+> HoopTrainer AI is a modern Next.js basketball training app with Supabase auth and data storage, a Groq-powered AI planner, workout CRUD, responsive dashboard and planner experiences, and a player profile system that personalizes generated plans.
