@@ -3,31 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-
-type PlayerProfile = {
-  age: string;
-  position: string;
-  level: string;
-  daysPerWeek: string;
-  primaryGoal: string;
-  equipment: string;
-  injuryNotes: string;
-};
-
-const emptyProfile: PlayerProfile = {
-  age: "",
-  position: "",
-  level: "",
-  daysPerWeek: "",
-  primaryGoal: "",
-  equipment: "",
-  injuryNotes: "",
-};
+import { emptyPlayerProfile, normalizePlayerProfile, type PlayerProfile } from "@/lib/playerProfile";
 
 export default function AccountSettingsPage() {
   const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
   const [name, setName] = useState("");
-  const [profile, setProfile] = useState<PlayerProfile>(emptyProfile);
+  const [profile, setProfile] = useState<Required<PlayerProfile>>(emptyPlayerProfile);
   const [msg, setMsg] = useState<string | null>(null);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,21 +20,13 @@ export default function AccountSettingsPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      const nextProfile = user?.user_metadata?.playerProfile ?? {};
+      const nextProfile = normalizePlayerProfile(user?.user_metadata?.playerProfile);
       setUser({
         email: user?.email ?? "",
         name: user?.user_metadata?.name ?? "",
       });
       setName(user?.user_metadata?.name ?? "");
-      setProfile({
-        age: nextProfile.age ?? "",
-        position: nextProfile.position ?? "",
-        level: nextProfile.level ?? "",
-        daysPerWeek: nextProfile.daysPerWeek ?? "",
-        primaryGoal: nextProfile.primaryGoal ?? "",
-        equipment: nextProfile.equipment ?? "",
-        injuryNotes: nextProfile.injuryNotes ?? "",
-      });
+      setProfile(nextProfile);
     });
   }, []);
 
@@ -64,7 +37,7 @@ export default function AccountSettingsPage() {
     const { error } = await supabase.auth.updateUser({
       data: {
         name,
-        playerProfile: profile,
+        playerProfile: normalizePlayerProfile(profile),
       },
     });
     setLoading(false);
@@ -83,7 +56,7 @@ export default function AccountSettingsPage() {
     const { error } = await supabase.auth.updateUser({
       data: {
         name,
-        playerProfile: profile,
+        playerProfile: normalizePlayerProfile(profile),
       },
     });
     setProfileLoading(false);

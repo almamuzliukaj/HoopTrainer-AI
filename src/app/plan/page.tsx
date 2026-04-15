@@ -5,6 +5,12 @@ import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import BrandMark from "@/components/BrandMark";
+import {
+  buildPlayerProfileHighlights,
+  hasPlayerProfile,
+  normalizePlayerProfile,
+  type PlayerProfile,
+} from "@/lib/playerProfile";
 
 // ========== Toaster =============
 function Toaster({ message, show, onHide }: { message: string; show: boolean; onHide: () => void }) {
@@ -74,16 +80,6 @@ function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 type Conversation = { id: string; title: string; user_id?: string; created_at?: string };
 type Message = { id: string; conversation_id: string; role: "user" | "ai"; content: string; created_at?: string };
 type ApiChatMessage = { role: "user" | "assistant"; content: string };
-type PlayerProfile = {
-  age?: string;
-  position?: string;
-  level?: string;
-  daysPerWeek?: string;
-  primaryGoal?: string;
-  equipment?: string;
-  injuryNotes?: string;
-};
-
 const markdownComponents = {
   p: ({ children }: { children?: React.ReactNode }) => (
     <p style={{ margin: "0 0 0.7rem", lineHeight: 1.7 }}>{children}</p>
@@ -155,7 +151,7 @@ export default function PlanPage() {
       setLoadingConvs(true); setErr(null);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setConversations([]); setLoadingConvs(false); setErr("Not logged in!"); return; }
-      setPlayerProfile((user.user_metadata?.playerProfile as PlayerProfile | undefined) ?? {});
+      setPlayerProfile(normalizePlayerProfile(user.user_metadata?.playerProfile));
       const { data, error } = await supabase
         .from("conversations").select("*").eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -180,7 +176,7 @@ export default function PlanPage() {
   // --- Main actions
   async function handleSend(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (!input.trim()) return;
+    if (sending || !input.trim()) return;
     setSending(true); setErr(null);
     let convId = activeId;
     const { data: { user } } = await supabase.auth.getUser();
@@ -233,7 +229,10 @@ export default function PlanPage() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, profile: playerProfile }),
+        body: JSON.stringify({
+          messages: apiMessages,
+          profile: normalizePlayerProfile(playerProfile),
+        }),
       });
       let aiMsg = "";
       if (!res.ok) {
@@ -624,12 +623,8 @@ export default function PlanPage() {
     );
   }
 
-  const profileHighlights = [
-    playerProfile.position ? `Position: ${playerProfile.position}` : null,
-    playerProfile.level ? `Level: ${playerProfile.level}` : null,
-    playerProfile.primaryGoal ? `Goal: ${playerProfile.primaryGoal}` : null,
-    playerProfile.daysPerWeek ? `Days/week: ${playerProfile.daysPerWeek}` : null,
-  ].filter(Boolean) as string[];
+  const profileHighlights = buildPlayerProfileHighlights(playerProfile);
+  const hasProfileContext = hasPlayerProfile(playerProfile);
 
   return (
     <Protected>
@@ -804,11 +799,12 @@ export default function PlanPage() {
                   </div>
                 )}
                 {sending &&
-                  <div style={{ display: "flex", margin: "0 0 0 auto" }}>
+                  <div style={{ display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      background: "linear-gradient(135deg,#13bfa5,#4fc9bd 85%)",
-                      color: "#1d424f", fontWeight: 700, fontSize: 13,
-                      padding: "8px 14px", borderRadius: "13px 11px 2px 14px",
+                      background: "rgba(77,211,201,0.12)",
+                      border: "1px solid rgba(77,211,201,0.28)",
+                      color: "var(--accent-2)", fontWeight: 800, fontSize: 13,
+                      padding: "9px 14px", borderRadius: 999,
                       minWidth: 60,
                     }}>AI is formulating…</div>
                   </div>}
@@ -845,14 +841,16 @@ export default function PlanPage() {
                     background: "linear-gradient(137deg,#13bfa5,#4fc9bd 120%)",
                     color: "#022923", border: "none", boxShadow: "0 2px 7px rgba(34,208,189,0.13)",
                     cursor: sending ? "not-allowed" : "pointer", marginBottom: 2
-                  }} aria-label="Send">
+                  }} aria-label={sending ? "Generating plan" : "Send message"}>
                     <svg width="14" height="14" fill="none" viewBox="0 0 20 20"><path
                       d="M4 10h7M10.7 4.3l4.3 4.2c.4.4.4 1 0 1.4l-4.3 4.2"
                       stroke="#08514a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                 </form>
-                <div className="plan-composer-helper" style={{ maxWidth: 750, margin: "10px auto 0", color: "var(--muted)", fontSize: 12.8, lineHeight: 1.5 }}>
-                  Tip: include the athlete&apos;s goal, number of training days, equipment, and any recovery limits for sharper plans.
+                <div className="plan-composer-helper" style={{ maxWidth: 750, margin: "10px auto 0", color: hasProfileContext ? "var(--muted)" : "var(--accent-2)", fontSize: 12.8, lineHeight: 1.5, fontWeight: hasProfileContext ? 500 : 700 }}>
+                  {hasProfileContext
+                    ? "Tip: include the athlete's goal, number of training days, equipment, and any recovery limits for sharper plans."
+                    : "Tip: add your player profile in Account so HoopTrainer AI can personalize every plan."}
                 </div>
               </div>
             )}

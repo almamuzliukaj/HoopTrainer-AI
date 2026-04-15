@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { buildPlayerProfileContext, type PlayerProfile } from "@/lib/playerProfile";
 
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -48,16 +49,6 @@ interface ChatMessage {
   content: string;
 }
 
-interface PlayerProfile {
-  age?: string;
-  position?: string;
-  level?: string;
-  daysPerWeek?: string;
-  primaryGoal?: string;
-  equipment?: string;
-  injuryNotes?: string;
-}
-
 function isChatMessage(m: unknown): m is ChatMessage {
   return (
     typeof m === "object" &&
@@ -75,27 +66,6 @@ function isDetailedEnough(prompt: string) {
   return prompt.length >= 8 && prompt.split(/\s+/).length >= 3;
 }
 
-function buildProfileContext(profile: PlayerProfile | undefined) {
-  if (!profile) return null;
-
-  const fields = [
-    profile.age ? `Age: ${profile.age}` : null,
-    profile.position ? `Position: ${profile.position}` : null,
-    profile.level ? `Level: ${profile.level}` : null,
-    profile.daysPerWeek ? `Training days per week: ${profile.daysPerWeek}` : null,
-    profile.primaryGoal ? `Primary goal: ${profile.primaryGoal}` : null,
-    profile.equipment ? `Equipment access: ${profile.equipment}` : null,
-    profile.injuryNotes ? `Injury or recovery notes: ${profile.injuryNotes}` : null,
-  ].filter(Boolean);
-
-  if (fields.length === 0) return null;
-
-  return [
-    "Use this athlete profile to personalize every recommendation unless the user overrides it:",
-    ...fields,
-  ].join("\n");
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -103,7 +73,7 @@ export async function POST(req: NextRequest) {
       body?.profile && typeof body.profile === "object"
         ? (body.profile as PlayerProfile)
         : undefined;
-    const profileContext = buildProfileContext(profile);
+    const profileContext = buildPlayerProfileContext(profile);
 
     let messagesArr: ChatMessage[] = [
       { role: "system", content: SYSTEM_PROMPT },
