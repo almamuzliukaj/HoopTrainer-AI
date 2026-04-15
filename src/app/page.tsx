@@ -118,7 +118,7 @@ export default function Page() {
       flexDirection: "column",
       background: "none"
     }}>
-      <div className="bg-ball-left" style={{ flex: "1 0 auto", display: "flex", flexDirection: "column", padding: 0 }}>
+      <div className="bg-ball-left basketball-atmosphere" style={{ flex: "1 0 auto", display: "flex", flexDirection: "column", padding: 0 }}>
         <nav className="landing-topbar" style={navStyle}>
           <BrandMark size="md" />
           <div>

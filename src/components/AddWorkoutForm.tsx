@@ -43,77 +43,65 @@ export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
 
   return (
     <form
+      className="workout-form-card"
       onSubmit={handleSubmit}
       style={{
-        background: "var(--card-2)",
-        padding: "24px",
-        marginBottom: "30px",
-        borderRadius: "8px",
-        border: "1px solid var(--border)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px"
+        display: "grid",
+        gap: 16,
       }}
     >
-      <div>
-        <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Title</label>
-        <input
-          placeholder="Workout name..."
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          disabled={saving}
-          style={{
-            width: '100%',
-            padding: "12px",
-            border: "1px solid var(--border)",
-            borderRadius: "4px",
-            background: "rgba(255,255,255,0.02)",
-            color: "var(--text)",
-            marginTop: "5px",
-            boxSizing: "border-box"
-          }}
-        />
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start" }}>
+        <div>
+          <div style={{ color: "var(--accent-2)", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
+            QUICK LOG
+          </div>
+          <h3 style={{ marginTop: 5, fontSize: 22 }}>Add workout</h3>
+          <p className="helper" style={{ margin: "6px 0 0", lineHeight: 1.5 }}>
+            Save sessions, notes, or drills you want to repeat.
+          </p>
+        </div>
+        <span className="workout-form-icon">+</span>
       </div>
 
-      <div>
-        <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "1px" }}>Description</label>
-        <textarea
-          placeholder="Details..."
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          disabled={saving}
-          rows={3}
-          style={{
-            width: '100%',
-            padding: "12px",
-            border: "1px solid var(--border)",
-            borderRadius: "4px",
-            background: "rgba(255,255,255,0.02)",
-            color: "var(--text)",
-            marginTop: "5px",
-            resize: "none",
-            boxSizing: "border-box"
-          }}
-        />
+      <div className="workout-form-grid">
+        <label style={{ display: "grid", gap: 7 }}>
+          <span className="helper" style={{ fontWeight: 800 }}>Workout title</span>
+          <input
+            placeholder="Shooting rhythm, lower-body strength..."
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            disabled={saving}
+          />
+        </label>
+
+        <label style={{ display: "grid", gap: 7 }}>
+          <span className="helper" style={{ fontWeight: 800 }}>Session notes</span>
+          <textarea
+            placeholder="Add drills, sets, reps, focus, or what you felt..."
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            disabled={saving}
+            rows={4}
+            style={{ resize: "vertical" }}
+          />
+        </label>
       </div>
 
       <button
         type="submit"
-        disabled={saving}
+        disabled={saving || !title.trim() || !description.trim()}
         style={{
-          background: "var(--accent-2)",
+          justifySelf: "start",
+          width: "auto",
+          padding: "12px 18px",
+          borderRadius: 14,
+          background: "linear-gradient(135deg, var(--accent-2), #5aa0ff)",
           color: "#0f1524",
-          padding: "12px",
-          borderRadius: "4px",
-          border: "none",
-          fontWeight: 700,
-          cursor: "pointer",
-          width: "100%",
-          maxWidth: "200px"
+          fontWeight: 950,
         }}>
         {saving ? "Saving..." : "Save Workout"}
       </button>
-      {error && <p style={{ color: "var(--error)" }}>{error}</p>}
+      {error && <div className="error-box">{error}</div>}
     </form>
   );
 }

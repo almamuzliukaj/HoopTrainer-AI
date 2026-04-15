@@ -80,6 +80,17 @@ function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 type Conversation = { id: string; title: string; user_id?: string; created_at?: string };
 type Message = { id: string; conversation_id: string; role: "user" | "ai"; content: string; created_at?: string };
 type ApiChatMessage = { role: "user" | "assistant"; content: string };
+
+function buildSavedPlanTitle(content: string) {
+  const firstMeaningfulLine = content
+    .split("\n")
+    .map((line) => line.replace(/^#+\s*/, "").replace(/[*_`]/g, "").trim())
+    .find((line) => line.length > 0);
+
+  if (!firstMeaningfulLine) return "Saved AI training plan";
+  return firstMeaningfulLine.length > 64 ? `${firstMeaningfulLine.slice(0, 61)}...` : firstMeaningfulLine;
+}
+
 const markdownComponents = {
   p: ({ children }: { children?: React.ReactNode }) => (
     <p style={{ margin: "0 0 0.7rem", lineHeight: 1.7 }}>{children}</p>
@@ -131,6 +142,7 @@ export default function PlanPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasterMsg, setToasterMsg] = useState('');
   const [toasterShow, setToasterShow] = useState(false);
+  const [savingPlanId, setSavingPlanId] = useState<string | null>(null);
 
   // New Chat input modal state:
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -623,6 +635,37 @@ export default function PlanPage() {
     );
   }
 
+  async function saveTrainingPlan(message: Message) {
+    setErr(null);
+    setSavingPlanId(message.id);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setErr("Not logged in!");
+      showToast("Log in to save plans.");
+      setSavingPlanId(null);
+      return;
+    }
+
+    const { error } = await supabase.from("training_plans").insert([{
+      user_id: user.id,
+      source_conversation_id: message.conversation_id,
+      title: buildSavedPlanTitle(message.content),
+      content: message.content,
+      status: "saved",
+    }]);
+
+    setSavingPlanId(null);
+
+    if (error) {
+      setErr(error.message);
+      showToast("Could not save plan.");
+      return;
+    }
+
+    showToast("Training plan saved.");
+  }
+
   const profileHighlights = buildPlayerProfileHighlights(playerProfile);
   const hasProfileContext = hasPlayerProfile(playerProfile);
 
@@ -634,7 +677,7 @@ export default function PlanPage() {
       {renderDeleteConfirmModal()}
       {renderNewChatModal()}
       <SidebarOverlay />
-      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
+      <div className="app-shell plan-page-shell basketball-atmosphere" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
         <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="page-frame plan-shell" style={{
           display: "flex", alignItems: "stretch",
@@ -781,6 +824,25 @@ export default function PlanPage() {
                           <ReactMarkdown components={markdownComponents}>
                             {msg.content}
                           </ReactMarkdown>
+                          <button
+                            type="button"
+                            onClick={() => saveTrainingPlan(msg)}
+                            disabled={savingPlanId === msg.id}
+                            style={{
+                              width: "auto",
+                              marginTop: 10,
+                              padding: "8px 11px",
+                              borderRadius: 999,
+                              background: "rgba(77,211,201,0.12)",
+                              color: "var(--accent-2)",
+                              border: "1px solid rgba(77,211,201,0.24)",
+                              boxShadow: "none",
+                              fontSize: 12.5,
+                              fontWeight: 900,
+                            }}
+                          >
+                            {savingPlanId === msg.id ? "Saving..." : "Save as training plan"}
+                          </button>
                         </div>
                       ) : (
                         <div

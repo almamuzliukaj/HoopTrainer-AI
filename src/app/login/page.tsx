@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="bg-ball-left auth-page-shell"
+      className="bg-ball-left auth-page-shell basketball-atmosphere"
       style={{
         minHeight: "100dvh",
         alignItems: "center",

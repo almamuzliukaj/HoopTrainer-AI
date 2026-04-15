@@ -54,22 +54,22 @@ export default function WorkoutItem({ workout, onUpdated }: { workout: Workout; 
   };
 
   const cardStyle: React.CSSProperties = {
-    background: "var(--card-2)",
-    padding: "24px",
-    borderRadius: "10px",
-    border: "1px solid var(--border)",
-    marginBottom: "16px",
-    transition: "transform 0.2s ease"
+    background: "linear-gradient(145deg, rgba(35,45,72,0.96), rgba(25,33,54,0.96))",
+    padding: "16px",
+    borderRadius: "20px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    boxShadow: "0 14px 34px rgba(0,0,0,0.22)",
+    transition: "transform 0.2s ease, border-color 0.2s ease",
   };
 
   if (editing) {
     return (
-      <div style={cardStyle}>
+      <div className="workout-item-card" style={cardStyle}>
         <input 
           style={{
-            width: '100%', padding: '10px', marginBottom: '10px',
-            background: 'transparent', border: '1px solid var(--border)',
-            color: 'var(--text)', borderRadius: '4px'
+            width: "100%", padding: "12px 13px", marginBottom: "10px",
+            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+            color: "var(--text)", borderRadius: 12,
           }}
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -78,9 +78,9 @@ export default function WorkoutItem({ workout, onUpdated }: { workout: Workout; 
         />
         <textarea 
           style={{
-            width: '100%', padding: '10px', marginBottom: '15px',
-            background: 'transparent', border: '1px solid var(--border)',
-            color: 'var(--text)', borderRadius: '4px', resize: 'none'
+            width: "100%", padding: "12px 13px", marginBottom: "15px",
+            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+            color: "var(--text)", borderRadius: 12, resize: "vertical",
           }}
           value={description}
           onChange={e => setDescription(e.target.value)}
@@ -88,15 +88,16 @@ export default function WorkoutItem({ workout, onUpdated }: { workout: Workout; 
           rows={3}
           placeholder="Workout description"
         />
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button
             onClick={handleUpdate}
             disabled={saving || !title.trim() || !description.trim()}
             style={{
-              padding: '8px 20px',
-              background: 'var(--accent-2)',
-              border: 'none',
-              borderRadius: '4px',
+              width: "auto",
+              padding: "9px 14px",
+              background: "linear-gradient(135deg, var(--accent-2), #5aa0ff)",
+              border: "none",
+              borderRadius: 999,
               fontWeight: 600,
               cursor: saving ? "wait" : "pointer"
             }}
@@ -107,11 +108,13 @@ export default function WorkoutItem({ workout, onUpdated }: { workout: Workout; 
             onClick={() => { setEditing(false); setError(null); }}
             disabled={saving}
             style={{
-              padding: '8px 20px',
-              background: 'transparent',
-              border: '1px solid var(--border)',
-              color: 'var(--muted)',
-              borderRadius: '4px'
+              width: "auto",
+              padding: "9px 14px",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "var(--muted)",
+              borderRadius: 999,
+              boxShadow: "none",
             }}
           >
             Cancel
@@ -127,26 +130,26 @@ export default function WorkoutItem({ workout, onUpdated }: { workout: Workout; 
   }
 
   return (
-    <div style={cardStyle}>
+    <div className="workout-item-card" style={cardStyle}>
       <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px"
+        display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, marginBottom: "12px"
       }}>
-        <div>
-          <h4 style={{ margin: 0, fontSize: "17px", fontWeight: 600, color: "var(--accent-2)" }}>{workout.title}</h4>
+        <div style={{ minWidth: 0 }}>
+          <h4 style={{ margin: 0, fontSize: "17px", fontWeight: 900, color: "var(--text)", lineHeight: 1.2 }}>{workout.title}</h4>
           <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "var(--muted)", textTransform: "uppercase" }}>
             {workout.created_at ? new Date(workout.created_at).toLocaleDateString('en-GB') : "Draft"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div className="workout-actions" style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <button 
             onClick={() => setEditing(true)}
-            style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}
+            style={{ width: "auto", padding: "7px 10px", background: "rgba(90,160,255,0.1)", border: "1px solid rgba(90,160,255,0.18)", color: "var(--accent)", cursor: "pointer", fontSize: "12.5px", fontWeight: 900, borderRadius: 999, boxShadow: "none" }}
           >
             Edit
           </button>
           <button 
             onClick={handleDelete}
-            style={{ background: "none", border: "none", color: "#e44949", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}
+            style={{ width: "auto", padding: "7px 10px", background: "rgba(255,107,107,0.1)", border: "1px solid rgba(255,107,107,0.2)", color: "var(--error)", cursor: "pointer", fontSize: "12.5px", fontWeight: 900, borderRadius: 999, boxShadow: "none" }}
             disabled={saving}
           >
             Delete

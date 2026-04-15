@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { emptyPlayerProfile } from "@/lib/playerProfile";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -11,33 +12,83 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState("");
 
   const isPasswordShort = password.length > 0 && password.length < 6;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
+    setPendingConfirmationEmail("");
     if (isPasswordShort) {
       setError("Password must be at least 6 characters.");
       return;
     }
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } }, // store in user_metadata
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name, playerProfile: emptyPlayerProfile },
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
+      });
+
+      if (error) {
+        setError(error.message || "Signup failed. Please try again.");
+        return;
+      }
+
+      if (!data.session) {
+        setPendingConfirmationEmail(email);
+        setSuccess("Account created. Check your email to confirm it, then log in to finish your player profile.");
+        return;
+      }
+
+      router.replace("/account?welcome=1");
+    } catch {
+      setError(
+        "Could not connect to authentication right now. Check your internet connection and Supabase settings, then try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendConfirmation = async () => {
+    if (!pendingConfirmationEmail) return;
+
+    setError("");
+    setSuccess("");
+    setResending(true);
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingConfirmationEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`,
+      },
     });
 
-    setLoading(false);
-    if (error) return setError(error.message || "Signup failed");
-    router.replace("/dashboard");
+    setResending(false);
+
+    if (error) {
+      setError(error.message || "Could not resend confirmation email. Please try again later.");
+      return;
+    }
+
+    setSuccess("Confirmation email sent again. Check your inbox and spam folder.");
   };
 
   return (
     <div
-      className="bg-ball-left auth-page-shell"
+      className="bg-ball-left auth-page-shell basketball-atmosphere"
       style={{
         minHeight: "100dvh",
         alignItems: "center",
@@ -117,6 +168,40 @@ export default function SignupPage() {
               )}
             </div>
             {error && <div className="error-box">Error: {error}</div>}
+            {success && (
+              <div
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  background: "rgba(77,211,201,0.1)",
+                  border: "1px solid rgba(77,211,201,0.24)",
+                  color: "var(--accent-2)",
+                  fontWeight: 800,
+                  lineHeight: 1.5,
+                }}
+              >
+                {success}
+                {pendingConfirmationEmail && (
+                  <button
+                    type="button"
+                    onClick={resendConfirmation}
+                    disabled={resending}
+                    style={{
+                      width: "100%",
+                      marginTop: 10,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: "rgba(77,211,201,0.16)",
+                      color: "var(--accent-2)",
+                      border: "1px solid rgba(77,211,201,0.28)",
+                      fontWeight: 900,
+                    }}
+                  >
+                    {resending ? "Sending..." : "Resend confirmation email"}
+                  </button>
+                )}
+              </div>
+            )}
             <button
               type="submit"
               disabled={loading || !email || !password || !name || isPasswordShort}
