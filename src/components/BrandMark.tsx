@@ -40,6 +40,7 @@ export default function BrandMark({
 
   const content = (
     <div
+      className="brand-mark"
       style={{
         display: "flex",
         alignItems: "center",
@@ -47,6 +48,7 @@ export default function BrandMark({
       }}
     >
       <div
+        className="brand-icon"
         style={{
           width: current.box,
           height: current.box,
@@ -66,6 +68,7 @@ export default function BrandMark({
       </div>
       {showWordmark ? (
         <span
+          className="brand-wordmark"
           style={{
             fontWeight: 800,
             letterSpacing: 0.35,

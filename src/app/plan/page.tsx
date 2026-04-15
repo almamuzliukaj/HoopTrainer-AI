@@ -634,11 +634,11 @@ export default function PlanPage() {
       {renderDeleteConfirmModal()}
       {renderNewChatModal()}
       <SidebarOverlay />
-      <div className="app-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
+      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
         <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="page-frame plan-shell" style={{
           display: "flex", alignItems: "stretch",
-          height: "calc(100vh - 56px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative"
+          height: "calc(100vh - 56px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative", minHeight: 0
         }}>
           <aside className={`app-sidebar plan-sidebar ${isSidebarOpen ? "open" : ""}`} style={{
             flex: "0 0 240px", maxWidth: 340, minWidth: 240,
@@ -731,7 +731,7 @@ export default function PlanPage() {
             borderRadius: "0 14px 14px 0",
             boxShadow: "0 8px 48px rgba(93,230,170,0.08), 0 1px 10px rgba(60,123,224,0.045)",
             display: "flex", flexDirection: "column", position: "relative", minWidth: 0,
-            height: "calc(100vh - 56px)", overflow: "hidden"
+            height: "calc(100vh - 56px)", overflow: "hidden", minHeight: 0
           }}>
             {/* CHAT */}
             <div ref={scrollRef} className="plan-scroll" style={{
@@ -869,7 +869,7 @@ export default function PlanPage() {
         @media (max-width:610px) {
           .plan-chat-panel { border-radius: 18px !important; }
           .plan-topbar { padding: 8px 10px !important; min-height: 52px !important; }
-          .plan-shell { height: auto !important; min-height: calc(100vh - 56px); }
+          .plan-shell { height: calc(100dvh - 58px) !important; min-height: 0 !important; }
         }
         `}</style>
       </div>

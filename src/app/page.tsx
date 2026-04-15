@@ -119,7 +119,7 @@ export default function Page() {
       background: "none"
     }}>
       <div className="bg-ball-left" style={{ flex: "1 0 auto", display: "flex", flexDirection: "column", padding: 0 }}>
-        <nav style={navStyle}>
+        <nav className="landing-topbar" style={navStyle}>
           <BrandMark size="md" />
           <div>
             <PublicMenu />

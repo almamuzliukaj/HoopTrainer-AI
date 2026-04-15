@@ -283,7 +283,7 @@ export default function Dashboard() {
               padding: "0 0 20px", // NDDRYSHIMI 1: Zvogëluam padding-un poshtë
               display: "flex",
               flexDirection: "column",
-              gap: 14,
+              gap: 18,
               flex: "1 0 auto",
             }}
           >

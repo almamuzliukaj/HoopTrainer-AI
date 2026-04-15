@@ -37,17 +37,17 @@ export default function SignupPage() {
 
   return (
     <div
-      className="bg-ball-left"
+      className="bg-ball-left auth-page-shell"
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         alignItems: "center",
         justifyContent: "center",
         display: "flex",
-        padding: "0 16px",
+        padding: "clamp(24px, 6vh, 72px) 16px",
       }}
     >
       <main
-        className="responsive-main"
+        className="responsive-main auth-main"
         style={{
           width: "min(520px, 100%)",
           display: "flex",
@@ -170,8 +170,8 @@ export default function SignupPage() {
       <style>{`
         @media (max-width: 600px) {
           .auth-card {
-            padding-left: 13px !important;
-            padding-right: 13px !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
           }
           .responsive-main {
             padding-left: 0 !important;
