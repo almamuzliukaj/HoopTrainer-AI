@@ -1271,6 +1271,11 @@ h1, h2, h3 { margin: 0; letter-spacing: 0.1px; }
 }
 
 @media (max-width: 700px) {
+  .plan-page-shell {
+    height: 100svh !important;
+    min-height: 100svh !important;
+  }
+
   .bg-ball-left,
   main,
   .responsive-main,
@@ -1492,7 +1497,7 @@ h1, h2, h3 { margin: 0; letter-spacing: 0.1px; }
 
   .plan-shell {
     width: min(100%, 96vw);
-    height: calc(100dvh - 66px) !important;
+    height: calc(100svh - 64px) !important;
     min-height: 0;
   }
 
@@ -1518,7 +1523,7 @@ h1, h2, h3 { margin: 0; letter-spacing: 0.1px; }
   }
 
   .plan-input-shell {
-    padding: 0 8px max(6px, env(safe-area-inset-bottom)) !important;
+    padding: 0 8px 4px !important;
     background: rgba(25,31,43,0.98) !important;
   }
 
@@ -1596,6 +1601,7 @@ h1, h2, h3 { margin: 0; letter-spacing: 0.1px; }
   }
 
   .plan-input-shell form {
-    padding: 9px 10px !important;
+    padding: 8px 10px !important;
+    margin-bottom: 0 !important;
   }
 }

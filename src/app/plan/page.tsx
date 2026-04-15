@@ -677,7 +677,7 @@ export default function PlanPage() {
       {renderDeleteConfirmModal()}
       {renderNewChatModal()}
       <SidebarOverlay />
-      <div className="app-shell plan-page-shell basketball-atmosphere" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
+      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
         <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="page-frame plan-shell" style={{
           display: "flex", alignItems: "stretch",
