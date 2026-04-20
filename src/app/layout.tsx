@@ -20,6 +20,14 @@ export const metadata: Metadata = {
     template: "%s | HoopTrainer AI",
   },
   description: "Basketball training plans, workout tracking, and AI-guided coaching for focused player development.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   openGraph: {
     title: "HoopTrainer AI",
     description: "Basketball training plans, workout tracking, and AI-guided coaching.",
