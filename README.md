@@ -323,7 +323,6 @@ If someone asks what this project is today, the short answer is:
 - Presentation plan: `docs/demo-plan.md`
 - Live demo URL: `https://hoop-trainer-ai.vercel.app`
 - Backup option: run locally with `npm run dev`
-- Final demo flow prepared: landing page -> login -> player profile -> AI Generator -> save plan -> dashboard -> saved plan modal -> workout library.
+- First professor demo flow prepared: landing page -> login -> player profile -> AI Generator -> save plan -> dashboard -> saved plan modal -> workout library.
 - Demo readiness checks: lint/build, live URL, login, AI generation, saved plans, workout CRUD, responsive layout, Terms, and Privacy pages.
 - Plan B: localhost demo, existing saved plans/chat history, and screenshots from `public/screenshots/`.
-- Plan C: prepared video recording of the full demo flow if both the live app and localhost fail during the presentation.

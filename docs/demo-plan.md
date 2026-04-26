@@ -40,7 +40,7 @@ curl.exe -I -L --max-time 60 https://hoop-trainer-ai.vercel.app
 HTTP/1.1 200 OK
 ```
 
-Before the final presentation, I will also open the URL manually in the browser and confirm that login, dashboard, AI Generator, and saved plans work correctly.
+Before the first professor demo, I will also open the URL manually in the browser and confirm that login, dashboard, AI Generator, and saved plans work correctly.
 
 ## 3. Main Demo Flow
 
@@ -105,7 +105,7 @@ I will keep the technical explanation short and focused on the main architecture
 
 ## 6. What I Checked Before the Demo
 
-Before the final presentation, I checked or prepared the following:
+Before the first professor demo, I checked or prepared the following:
 
 - `npm run lint` passes;
 - `npm run build` passes after rerunning outside the sandbox because Windows/OneDrive locked `.next`;
@@ -119,7 +119,7 @@ Before the final presentation, I checked or prepared the following:
 - Privacy and Terms pages are present and professionally styled;
 - backup plan is ready if the live demo fails.
 
-Final manual checks before presenting:
+Manual checks before presenting:
 
 - open the live URL in the browser;
 - log in with the demo account;
@@ -157,21 +157,7 @@ http://localhost:3000
 - show the README and repository structure;
 - explain the planned flow and technical architecture from the codebase.
 
-## 8. Plan C If Both Live Demo and Local Demo Fail
-
-If both the live deployment and local demo fail, I will use a prepared screen recording of the project. The recording will show the same main demo flow:
-
-1. landing page;
-2. login/demo account;
-3. player profile;
-4. AI Generator;
-5. saving a training plan;
-6. opening the saved plan from the dashboard;
-7. daily challenge, weekly consistency, and workout library.
-
-This backup makes sure I can still demonstrate the value, design, and technical flow of the project even if there is a network, deployment, API, or local environment problem during the final presentation.
-
-## 9. Demo Day Organization
+## 8. Demo Day Organization
 
 Before the presentation starts, I will:
 
@@ -180,17 +166,16 @@ Before the presentation starts, I will:
 - keep one prepared AI prompt ready;
 - keep at least one saved training plan ready as backup;
 - keep a local server ready as Plan B;
-- keep a video recording ready as Plan C;
 - keep the README and this demo plan open;
 - explain the product value first, then the technical parts briefly.
 
-## 10. Opening Statement
+## 9. Opening Statement
 
 ```text
 HoopTrainer AI is a basketball training web application that combines AI-generated training plans, player profile personalization, saved plans, and workout tracking in one dashboard. In this demo, I will show how a player sets up a profile, generates a personalized plan with AI, saves the plan, and tracks training progress from the dashboard.
 ```
 
-## 11. Closing Statement
+## 10. Closing Statement
 
 ```text
 This project is a functional MVP with real product value. It is not only an AI chat page; it has a full user flow where a player personalizes their profile, generates a plan, saves it, and tracks training activity. The next improvements would be calendar scheduling, a dedicated saved-plans library, and stronger automated test coverage.
