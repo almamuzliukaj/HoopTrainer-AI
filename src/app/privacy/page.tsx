@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { CSSProperties } from "react";
 import BrandMark from "@/components/BrandMark";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -9,91 +8,99 @@ export const metadata: Metadata = {
   description: "Privacy policy for HoopTrainer AI.",
 };
 
-const sectionStyle: CSSProperties = {
-  display: "grid",
-  gap: 10,
-  padding: "22px 0",
-  borderTop: "1px solid rgba(255,255,255,0.08)",
-};
+const privacySections = [
+  {
+    title: "What We Store",
+    body:
+      "Depending on how you use the app, HoopTrainer AI may store your account email, display name, player profile, workout entries, saved plans, and conversation history. This data supports authentication, personalization, and saved training workflows.",
+  },
+  {
+    title: "How Data Is Used",
+    body:
+      "Your data is used to sign you in, tailor training recommendations, save workouts, return chat history, and keep your dashboard useful across sessions. We do not needlessly expose one user's private data to another user.",
+  },
+  {
+    title: "AI Requests",
+    body:
+      "When you ask for a plan, relevant message content and profile context may be sent to the configured AI provider so the app can generate a response. Avoid sharing sensitive personal, medical, or financial information in prompts unless you are comfortable doing so.",
+  },
+  {
+    title: "Data Access and Security",
+    body:
+      "We aim to protect stored data through standard platform controls, authentication, and access restrictions. No internet-facing app can promise perfect security, so users should also choose strong passwords and protect their own devices.",
+  },
+  {
+    title: "Contact",
+    body:
+      "For privacy questions, contact support@hooptrainer.ai. We will use that channel for privacy, data access, and policy questions.",
+  },
+];
 
 export default function PrivacyPage() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <main
-        style={{
-          minHeight: "100vh",
-          padding: "56px 18px 88px",
-          flex: "1 0 auto",
-        }}
-      >
-        <div
-          style={{
-            width: "min(860px, 100%)",
-            margin: "0 auto",
-            background: "rgba(20, 27, 44, 0.84)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: 24,
-            boxShadow: "0 24px 60px rgba(0,0,0,0.3)",
-            padding: "30px 26px",
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-            <BrandMark size="sm" />
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link href="/" style={{ fontWeight: 700 }}>Back home</Link>
-              <Link href="/dashboard" style={{ fontWeight: 700, color: "var(--accent-2)" }}>Dashboard</Link>
-            </div>
+    <div className="legal-page-shell">
+      <main className="legal-page-main">
+        <nav className="legal-topbar">
+          <BrandMark size="sm" />
+          <div className="legal-nav-actions">
+            <Link href="/">Landing page</Link>
+            <Link href="/dashboard">Dashboard</Link>
           </div>
+        </nav>
 
-          <header style={{ display: "grid", gap: 10, padding: "24px 0 18px" }}>
-            <p className="helper" style={{ margin: 0 }}>Last updated: April 14, 2026</p>
-            <h1 style={{ fontSize: 34, lineHeight: 1.1 }}>Privacy Policy</h1>
-            <p className="helper" style={{ margin: 0, maxWidth: 680 }}>
-              HoopTrainer AI stores account and training data so the product can authenticate users, save workouts,
-              and preserve AI conversations across sessions.
+        <section className="legal-hero">
+          <div>
+            <div className="section-kicker">HOOPTRAINER AI POLICY</div>
+            <h1>Privacy Policy</h1>
+            <p>
+              A clear overview of what HoopTrainer AI stores, why it is used, and how AI-generated training
+              requests are handled.
             </p>
-          </header>
+          </div>
+          <div className="legal-hero-card">
+            <span>Last updated</span>
+            <strong>April 26, 2026</strong>
+            <small>Applies to accounts, workouts, saved plans, and AI planner activity.</small>
+          </div>
+        </section>
 
-          <section style={sectionStyle}>
-            <h2 style={{ fontSize: 22 }}>What We Store</h2>
-            <p className="helper" style={{ margin: 0 }}>
-              Depending on how you use the app, we may store your account email, display name, workout entries,
-              and conversation history. This information supports the core features of the product.
-            </p>
-          </section>
+        <section className="legal-summary-grid" aria-label="Privacy summary">
+          <div>
+            <span>01</span>
+            <strong>Account data</strong>
+            <p>Email, display name, and player profile help personalize the product.</p>
+          </div>
+          <div>
+            <span>02</span>
+            <strong>Training data</strong>
+            <p>Workouts, saved plans, and chats are stored so your progress is not lost.</p>
+          </div>
+          <div>
+            <span>03</span>
+            <strong>AI context</strong>
+            <p>Relevant prompts may be sent to the AI provider to generate responses.</p>
+          </div>
+        </section>
 
-          <section style={sectionStyle}>
-            <h2 style={{ fontSize: 22 }}>How Data Is Used</h2>
-            <p className="helper" style={{ margin: 0 }}>
-              Your data is used to authenticate your account, personalize your experience, and return saved content
-              such as workouts and chat history. We do not needlessly expose one user&apos;s data to another user.
-            </p>
-          </section>
+        <section className="legal-content-card">
+          {privacySections.map((section) => (
+            <article key={section.title} className="legal-section">
+              <h2>{section.title}</h2>
+              <p>{section.body}</p>
+            </article>
+          ))}
+        </section>
 
-          <section style={sectionStyle}>
-            <h2 style={{ fontSize: 22 }}>AI Requests</h2>
-            <p className="helper" style={{ margin: 0 }}>
-              When you ask for a plan, relevant message content is sent to the configured AI provider so the app can generate
-              a response. Avoid sharing sensitive personal or medical information in prompts unless you are comfortable doing so.
-            </p>
-          </section>
-
-          <section style={sectionStyle}>
-            <h2 style={{ fontSize: 22 }}>Data Access and Security</h2>
-            <p className="helper" style={{ margin: 0 }}>
-              We aim to protect stored data through standard platform controls and access restrictions. No internet-facing app
-              can promise perfect security, so users should also choose strong passwords and protect their own devices.
-            </p>
-          </section>
-
-          <section style={sectionStyle}>
-            <h2 style={{ fontSize: 22 }}>Contact</h2>
-            <p className="helper" style={{ margin: 0 }}>
-              For privacy questions, contact <a href="mailto:support@hooptrainer.ai">support@hooptrainer.ai</a>.
-            </p>
-          </section>
-        </div>
+        <section className="legal-bottom-actions">
+          <div>
+            <strong>Ready to keep training?</strong>
+            <p>Return to your dashboard or revisit the public landing page.</p>
+          </div>
+          <div>
+            <Link className="legal-primary-action" href="/dashboard">Back to dashboard</Link>
+            <Link className="legal-secondary-action" href="/">Back to landing page</Link>
+          </div>
+        </section>
       </main>
       <SiteFooter compact />
     </div>

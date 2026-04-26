@@ -60,7 +60,15 @@ export default function AddWorkoutForm({ onAdded }: { onAdded: () => void }) {
             Save sessions, notes, or drills you want to repeat.
           </p>
         </div>
-        <span className="workout-form-icon">+</span>
+        <button
+          type="submit"
+          className="workout-form-icon"
+          aria-label="Save workout"
+          title="Save workout"
+          disabled={saving || !title.trim() || !description.trim()}
+        >
+          +
+        </button>
       </div>
 
       <div className="workout-form-grid">

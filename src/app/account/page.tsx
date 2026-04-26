@@ -241,21 +241,26 @@ export default function AccountSettingsPage() {
           display: "flex", flexDirection: "column", alignItems: "center", gap: 12
         }}>
           <div
+            className="account-avatar-badge"
             style={{
-              width: 72,
-              height: 72,
+              width: 84,
+              height: 84,
               borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--accent-2), #3c7be0)",
-              color: "#0f1524",
+              background:
+                "linear-gradient(145deg, #182236 0%, #253657 58%, #121d31 100%)",
+              color: "var(--accent-2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontWeight: 900,
-              fontSize: 35,
+              fontSize: 36,
               letterSpacing: 0.3,
               marginBottom: 4,
               marginTop: 2,
-              boxShadow: "0 3px 22px rgba(60,123,224,0.17)"
+              border: "1px solid rgba(77,211,201,0.34)",
+              boxShadow: "0 18px 42px rgba(0,0,0,0.28), 0 0 0 7px rgba(77,211,201,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
+              position: "relative",
+              isolation: "isolate",
             }}
           >
             {(user?.name?.[0] ?? user?.email?.[0] ?? "U").toUpperCase()}

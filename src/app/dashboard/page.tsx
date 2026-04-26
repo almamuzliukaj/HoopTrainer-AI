@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { Protected } from "@/components/Protected";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
@@ -57,21 +58,25 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
     <div ref={ref} style={{ position: "relative", zIndex: 110 }}>
       <button
         aria-label="Account"
+        className="account-trigger-button"
         onClick={() => setOpen(v => !v)}
         style={{
           width: isMobile ? 36 : 48,
           height: isMobile ? 36 : 48,
           borderRadius: "50%",
-          border: "2px solid var(--accent-2)",
-          background: "linear-gradient(135deg, var(--accent-2), #3c7be0)",
+          border: "1px solid rgba(77,211,201,0.32)",
+          background:
+            "linear-gradient(145deg, #182236 0%, #223150 62%, #142035 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
           outline: "none",
-          boxShadow: open ? "0 2px 24px rgba(77,211,201,0.18)" : "none",
+          boxShadow: open
+            ? "0 16px 36px rgba(0,0,0,0.26), 0 0 0 4px rgba(77,211,201,0.1), inset 0 1px 0 rgba(255,255,255,0.12)"
+            : "0 10px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
           fontWeight: 900,
-          color: "#0f1524",
+          color: "var(--accent-2)",
           fontSize: isMobile ? 16 : 23,
           letterSpacing: 0.2,
           margin: 0,
@@ -112,8 +117,9 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
                 width: isMobile ? 32 : 46,
                 height: isMobile ? 32 : 46,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg,var(--accent-2),#3c7be0)",
-                color: "#0f1524",
+                background: "linear-gradient(145deg, #182236, #223150)",
+                color: "var(--accent-2)",
+                border: "1px solid rgba(77,211,201,0.26)",
                 fontWeight: 900,
                 fontSize: isMobile ? 15 : 22,
                 display: "flex",
@@ -285,6 +291,18 @@ type SavedTrainingPlan = {
   created_at?: string;
 };
 
+const savedPlanMarkdownComponents = {
+  h1: ({ children }: { children?: ReactNode }) => <h1 className="saved-plan-md-heading">{children}</h1>,
+  h2: ({ children }: { children?: ReactNode }) => <h2 className="saved-plan-md-heading">{children}</h2>,
+  h3: ({ children }: { children?: ReactNode }) => <h3 className="saved-plan-md-subheading">{children}</h3>,
+  p: ({ children }: { children?: ReactNode }) => <p className="saved-plan-md-paragraph">{children}</p>,
+  ul: ({ children }: { children?: ReactNode }) => <ul className="saved-plan-md-list">{children}</ul>,
+  ol: ({ children }: { children?: ReactNode }) => <ol className="saved-plan-md-list saved-plan-md-numbered">{children}</ol>,
+  li: ({ children }: { children?: ReactNode }) => <li>{children}</li>,
+  strong: ({ children }: { children?: ReactNode }) => <strong className="saved-plan-md-strong">{children}</strong>,
+  code: ({ children }: { children?: ReactNode }) => <code className="saved-plan-md-code">{children}</code>,
+};
+
 function getPlanPreview(content: string) {
   return content
     .replace(/[#*_`>-]/g, " ")
@@ -453,6 +471,7 @@ export default function Dashboard() {
             }}
           />
           <div
+            className="saved-plan-modal"
             role="dialog"
             aria-modal="true"
             aria-label={selectedPlan.title}
@@ -473,6 +492,7 @@ export default function Dashboard() {
             }}
           >
             <div
+              className="saved-plan-modal-header"
               style={{
                 padding: "20px 22px",
                 borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -482,11 +502,16 @@ export default function Dashboard() {
                 alignItems: "flex-start",
               }}
             >
-              <div>
+              <div className="saved-plan-modal-title">
                 <div style={{ color: "var(--accent-2)", fontSize: 12, fontWeight: 900, letterSpacing: "0.1em" }}>
                   SAVED TRAINING PLAN
                 </div>
                 <h2 style={{ marginTop: 6, fontSize: "clamp(1.25rem, 4vw, 1.8rem)" }}>{selectedPlan.title}</h2>
+                <div className="saved-plan-modal-chips">
+                  <span>{selectedPlan.status || "saved"}</span>
+                  <span>{selectedPlan.created_at ? new Date(selectedPlan.created_at).toLocaleDateString() : "recent"}</span>
+                  <span>{Math.max(1, Math.round(selectedPlan.content.split(/\s+/).filter(Boolean).length / 120))} min read</span>
+                </div>
               </div>
               <button
                 type="button"
@@ -505,19 +530,35 @@ export default function Dashboard() {
                 x
               </button>
             </div>
-            <pre
+            <div className="saved-plan-playbook-strip" aria-hidden="true">
+              <div>
+                <span>01</span>
+                Warm up
+              </div>
+              <div>
+                <span>02</span>
+                Main work
+              </div>
+              <div>
+                <span>03</span>
+                Finish clean
+              </div>
+            </div>
+            <div
+              className="saved-plan-modal-content"
               style={{
                 margin: 0,
                 padding: "22px",
                 overflow: "auto",
-                whiteSpace: "pre-wrap",
                 lineHeight: 1.65,
                 fontFamily: "inherit",
                 color: "var(--text)",
               }}
             >
-              {selectedPlan.content}
-            </pre>
+              <ReactMarkdown components={savedPlanMarkdownComponents}>
+                {selectedPlan.content}
+              </ReactMarkdown>
+            </div>
           </div>
         </>
       )}
@@ -543,9 +584,25 @@ export default function Dashboard() {
             }}
           >
             <header className="dashboard-hero" style={{ display: "grid", gap: 5, marginTop: 0, marginBottom: 2 }}>
-              <p className="helper" style={{ margin: 0 }}>Welcome back</p>
-              <h1 style={{ margin: 0, fontSize: "clamp(1.9rem, 4vw, 2.5rem)", lineHeight: 1.05 }}>Your training dashboard</h1>
-              <p className="helper" style={{ margin: 0, maxWidth: 620 }}>Quick access to today&apos;s focus, recent momentum, and your personal workout library.</p>
+              <div>
+                <p className="helper" style={{ margin: 0 }}>Welcome back</p>
+                <h1 style={{ margin: 0, fontSize: "clamp(1.9rem, 4vw, 2.5rem)", lineHeight: 1.05 }}>Your training dashboard</h1>
+                <p className="helper" style={{ margin: 0, maxWidth: 620 }}>Quick access to today&apos;s focus, recent momentum, and your personal workout library.</p>
+              </div>
+              <div className="dashboard-hero-stats">
+                <div>
+                  <span>{currentStreak}</span>
+                  <small>day streak</small>
+                </div>
+                <div>
+                  <span>{completedThisWeek}/7</span>
+                  <small>this week</small>
+                </div>
+                <div>
+                  <span>{savedPlans.length}</span>
+                  <small>saved plans</small>
+                </div>
+              </div>
             </header>
 
             <section className="dashboard-grid">

@@ -317,3 +317,12 @@ This project is currently in a **strong MVP stage**.
 If someone asks what this project is today, the short answer is:
 
 > HoopTrainer AI is a modern Next.js basketball training app with Supabase auth and data storage, a Groq-powered AI planner, saved training plans, workout CRUD, daily challenges, streak/progress tracking, responsive dashboard and planner experiences, and a player profile system that personalizes generated plans.
+
+## Demo Preparation
+
+- Presentation plan: `docs/demo-plan.md`
+- Live demo URL: `https://hoop-trainer-ai.vercel.app`
+- Backup option: run locally with `npm run dev`
+- Final demo flow prepared: landing page -> login -> player profile -> AI Generator -> save plan -> dashboard -> saved plan modal -> workout library.
+- Demo readiness checks: lint/build, live URL, login, AI generation, saved plans, workout CRUD, responsive layout, Terms, and Privacy pages.
+- Plan B: localhost demo, existing saved plans/chat history, and screenshots from `public/screenshots/`.

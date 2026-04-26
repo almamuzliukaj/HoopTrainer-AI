@@ -54,21 +54,25 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
     <div ref={ref} style={{ position: "relative", zIndex: 110 }}>
       <button
         aria-label="Account"
+        className="account-trigger-button"
         onClick={() => setOpen((value) => !value)}
         style={{
           width: isMobile ? 38 : 48,
           height: isMobile ? 38 : 48,
           borderRadius: "50%",
-          border: "2px solid var(--accent-2)",
-          background: "linear-gradient(135deg, var(--accent-2), #3c7be0)",
+          border: "1px solid rgba(77,211,201,0.32)",
+          background:
+            "linear-gradient(145deg, #182236 0%, #223150 62%, #142035 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
           outline: "none",
-          boxShadow: open ? "0 2px 24px rgba(77,211,201,0.18)" : "none",
+          boxShadow: open
+            ? "0 16px 36px rgba(0,0,0,0.26), 0 0 0 4px rgba(77,211,201,0.1), inset 0 1px 0 rgba(255,255,255,0.12)"
+            : "0 10px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
           fontWeight: 900,
-          color: "#0f1524",
+          color: "var(--accent-2)",
           fontSize: isMobile ? 16 : 23,
           transition: "box-shadow 0.18s, width 0.18s, height 0.18s, font-size 0.18s",
         }}
@@ -109,8 +113,9 @@ function AccountMenu({ onSignOut }: { onSignOut: () => void }) {
                 width: isMobile ? 32 : 46,
                 height: isMobile ? 32 : 46,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg,var(--accent-2),#3c7be0)",
-                color: "#0f1524",
+                background: "linear-gradient(145deg, #182236, #223150)",
+                color: "var(--accent-2)",
+                border: "1px solid rgba(77,211,201,0.26)",
                 fontWeight: 900,
                 fontSize: isMobile ? 15 : 22,
                 display: "flex",

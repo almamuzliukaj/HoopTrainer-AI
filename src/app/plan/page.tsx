@@ -7,7 +7,6 @@ import ReactMarkdown from "react-markdown";
 import BrandMark from "@/components/BrandMark";
 import {
   buildPlayerProfileHighlights,
-  hasPlayerProfile,
   normalizePlayerProfile,
   type PlayerProfile,
 } from "@/lib/playerProfile";
@@ -53,7 +52,7 @@ function Toaster({ message, show, onHide }: { message: string; show: boolean; on
 }
 
 // ===== NAVBAR =====
-function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
+function Navbar({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) {
   return (
     <nav className="glass-topbar plan-topbar" style={{
       position: "sticky", top: 0, zIndex: 30,
@@ -61,7 +60,12 @@ function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
       padding: "10px 14px", minHeight: 56
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button className="mobile-menu-btn" onClick={onMenuClick} style={{
+        <button
+          className={`mobile-menu-btn${isMenuOpen ? " is-open" : ""}`}
+          onClick={onMenuClick}
+          aria-label={isMenuOpen ? "Close recent chats" : "Open recent chats"}
+          aria-expanded={isMenuOpen}
+          style={{
           background: "transparent", border: "none", color: "white",
           fontSize: 16, cursor: "pointer", padding: "4px 6px", display: "none", alignItems: "center"
         }}>☰</button>
@@ -80,6 +84,13 @@ function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 type Conversation = { id: string; title: string; user_id?: string; created_at?: string };
 type Message = { id: string; conversation_id: string; role: "user" | "ai"; content: string; created_at?: string };
 type ApiChatMessage = { role: "user" | "assistant"; content: string };
+
+const QUICK_PROMPTS = [
+  "Build me a 45-minute shooting workout for today.",
+  "Create a 4-day basketball training plan for this week.",
+  "Give me a vertical jump session with warm-up and cooldown.",
+  "Make a ball handling workout I can do alone on court.",
+];
 
 function buildSavedPlanTitle(content: string) {
   const firstMeaningfulLine = content
@@ -150,6 +161,36 @@ export default function PlanPage() {
 
   function showToast(m: string) {
     setToasterMsg(m); setToasterShow(true);
+  }
+
+  async function handleQuickPrompt(prompt: string) {
+    setInput(prompt);
+    if (activeId) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setErr("Not logged in!");
+      showToast("Log in to start a chat.");
+      return;
+    }
+
+    const title = prompt.length > 34 ? `${prompt.slice(0, 31)}...` : prompt;
+    const { data, error } = await supabase
+      .from("conversations")
+      .insert([{ user_id: user.id, title }])
+      .select("*")
+      .single();
+
+    if (error) {
+      setErr(error.message);
+      showToast("Failed to create chat.");
+      return;
+    }
+
+    setConversations((current) => [{ ...data }, ...current]);
+    setActiveId(data.id);
+    setMessages([]);
+    setIsSidebarOpen(false);
   }
 
   // Touch/hold detection for mobile
@@ -667,7 +708,6 @@ export default function PlanPage() {
   }
 
   const profileHighlights = buildPlayerProfileHighlights(playerProfile);
-  const hasProfileContext = hasPlayerProfile(playerProfile);
 
   return (
     <Protected>
@@ -677,11 +717,11 @@ export default function PlanPage() {
       {renderDeleteConfirmModal()}
       {renderNewChatModal()}
       <SidebarOverlay />
-      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100vh" }}>
-        <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100dvh" }}>
+        <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isMenuOpen={isSidebarOpen} />
         <div className="page-frame plan-shell" style={{
           display: "flex", alignItems: "stretch",
-          height: "calc(100vh - 56px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative", minHeight: 0
+          height: "calc(100dvh - 72px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative", minHeight: 0
         }}>
           <aside className={`app-sidebar plan-sidebar ${isSidebarOpen ? "open" : ""}`} style={{
             flex: "0 0 240px", maxWidth: 340, minWidth: 240,
@@ -774,9 +814,19 @@ export default function PlanPage() {
             borderRadius: "0 14px 14px 0",
             boxShadow: "0 8px 48px rgba(93,230,170,0.08), 0 1px 10px rgba(60,123,224,0.045)",
             display: "flex", flexDirection: "column", position: "relative", minWidth: 0,
-            height: "calc(100vh - 56px)", overflow: "hidden", minHeight: 0
+            height: "100%", overflow: "hidden", minHeight: 0
           }}>
             {/* CHAT */}
+            <div className="plan-chat-header">
+              <div>
+                <div className="section-kicker">AI TRAINING COACH</div>
+                <strong>Workout generator</strong>
+              </div>
+              <div className="plan-chat-status">
+                <span />
+                Profile-aware
+              </div>
+            </div>
             <div ref={scrollRef} className="plan-scroll" style={{
               flex: "1 1 0", overflowY: "auto", WebkitOverflowScrolling: "touch",
               display: "flex", flexDirection: "column", minHeight: 0
@@ -785,9 +835,22 @@ export default function PlanPage() {
                 maxWidth: 750, margin: "0 auto", display: "flex", flexDirection: "column",
                 gap: 13, padding: "7px 16px", width: "100%"
               }}>
-                {!activeId && <div style={{
-                  color: "var(--muted)", padding: 38, textAlign: "center", fontSize: 16
-                }}>Start a new conversation by clicking “+ New”</div>}
+                {(!activeId || (!loadingMsgs && messages.length === 0)) && (
+                  <div className="plan-start-empty" style={{
+                    color: "var(--muted)", padding: 24, textAlign: "center", fontSize: 16
+                  }}>
+                    <div className="plan-empty-orb">AI</div>
+                    <h2>Build a precise training plan.</h2>
+                    <p>Pick a starter or write your own request with focus, time, equipment, and intensity.</p>
+                    <div className="quick-prompt-grid">
+                      {QUICK_PROMPTS.map((prompt) => (
+                        <button key={prompt} type="button" onClick={() => handleQuickPrompt(prompt)}>
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {loadingMsgs && <div style={{ color: "var(--muted)", fontWeight: 700 }}>Loading…</div>}
                 {messages.map(msg =>
                   <div key={msg.id} style={{
@@ -874,9 +937,9 @@ export default function PlanPage() {
               </div>
             </div>
             {activeId && (
-              <div className="plan-input-shell" style={{ padding: "0 14px 27px 14px" }}>
+              <div className="plan-input-shell" style={{ padding: "0 14px 12px 14px" }}>
                 <form className="plan-composer" onSubmit={handleSend} style={{
-                  maxWidth: 750, margin: "0 auto", padding: "13px 12px 22px 12px", borderRadius: 14,
+                  maxWidth: 750, margin: "0 auto", padding: "10px 11px", borderRadius: 14,
                   border: "1.3px solid var(--border)", background: "rgba(16,22,37,0.97)",
                   display: "flex", alignItems: "flex-end", gap: 10,
                   boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
@@ -909,11 +972,6 @@ export default function PlanPage() {
                       stroke="#08514a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                 </form>
-                <div className="plan-composer-helper" style={{ maxWidth: 750, margin: "10px auto 0", color: hasProfileContext ? "var(--muted)" : "var(--accent-2)", fontSize: 12.8, lineHeight: 1.5, fontWeight: hasProfileContext ? 500 : 700 }}>
-                  {hasProfileContext
-                    ? "Tip: include the athlete's goal, number of training days, equipment, and any recovery limits for sharper plans."
-                    : "Tip: add your player profile in Account so HoopTrainer AI can personalize every plan."}
-                </div>
               </div>
             )}
           </section>
@@ -923,15 +981,16 @@ export default function PlanPage() {
           .mobile-menu-btn { display: flex !important; }
           .app-sidebar {
             position: fixed;
-            left: 0; top: 56px; height: calc(100vh - 56px); z-index: 50;
+            left: 8px; top: 66px; height: calc(100svh - 74px); z-index: 50;
             transform: translateX(-100%);
+            border-radius: 18px !important;
           }
           .app-sidebar.open { transform: translateX(0); }
         }
         @media (max-width:610px) {
           .plan-chat-panel { border-radius: 18px !important; }
           .plan-topbar { padding: 8px 10px !important; min-height: 52px !important; }
-          .plan-shell { height: calc(100dvh - 58px) !important; min-height: 0 !important; }
+          .plan-shell { height: calc(100svh - 66px) !important; min-height: 0 !important; width: calc(100vw - 16px) !important; }
         }
         `}</style>
       </div>
