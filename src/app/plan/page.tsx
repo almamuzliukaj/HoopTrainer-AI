@@ -105,11 +105,9 @@ function Toaster({
 function Navbar({
   onMenuClick,
   isMenuOpen,
-  onNewChatClick,
 }: {
   onMenuClick: () => void;
   isMenuOpen: boolean;
-  onNewChatClick: () => void;
 }) {
   return (
     <nav className="planner-topbar">
@@ -121,17 +119,11 @@ function Navbar({
           aria-label={isMenuOpen ? "Close conversations" : "Open conversations"}
           aria-expanded={isMenuOpen}
         >
-          <span />
-          <span />
-          <span />
-        </button>
-        <button
-          type="button"
-          className="planner-quick-add"
-          onClick={onNewChatClick}
-          aria-label="Start new chat"
-        >
-          +
+          <svg width={27} height={27} viewBox="0 0 27 27" fill="none" aria-hidden="true">
+            <rect x="5.5" y="8" width="16" height="2.6" rx="1.3" fill="var(--accent)" />
+            <rect x="5.5" y="13" width="16" height="2.6" rx="1.3" fill="var(--accent-2)" />
+            <rect x="5.5" y="18" width="16" height="2.6" rx="1.3" fill="var(--muted)" />
+          </svg>
         </button>
         <BrandMark size="sm" />
       </div>
@@ -613,12 +605,17 @@ export default function PlanPage() {
         <button
           type="button"
           className="planner-conversation-more"
+          aria-label={`Open actions for ${displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             setActionMenuId(conversation.id);
           }}
         >
-          ⋮
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <circle cx="9" cy="4" r="1.45" fill="currentColor" />
+            <circle cx="9" cy="9" r="1.45" fill="currentColor" />
+            <circle cx="9" cy="14" r="1.45" fill="currentColor" />
+          </svg>
         </button>
       </div>
     );
@@ -661,8 +658,11 @@ export default function PlanPage() {
         <>
           <div className="planner-modal-backdrop" onClick={() => setActionMenuId(null)} />
           <div className="planner-modal planner-action-modal">
-            <div className="planner-modal-title">
-              {conversations.find((item) => item.id === actionMenuId)?.title || "Conversation"}
+            <div className="planner-action-head">
+              <div className="planner-action-kicker">Chat options</div>
+              <div className="planner-modal-title">
+                {conversations.find((item) => item.id === actionMenuId)?.title || "Conversation"}
+              </div>
             </div>
             <button
               type="button"
@@ -676,7 +676,13 @@ export default function PlanPage() {
                 setActionMenuId(null);
               }}
             >
-              Rename conversation
+              <span className="planner-action-icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                  <path d="M4 14.6V16h1.4l8.45-8.45-1.4-1.4L4 14.6Z" fill="currentColor" />
+                  <path d="m13.25 5.35 1.4 1.4.72-.72a.98.98 0 0 0 0-1.38l-.02-.02a.98.98 0 0 0-1.38 0l-.72.72Z" fill="currentColor" />
+                </svg>
+              </span>
+              <span>Rename conversation</span>
             </button>
             <button
               type="button"
@@ -686,7 +692,13 @@ export default function PlanPage() {
                 setActionMenuId(null);
               }}
             >
-              Delete
+              <span className="planner-action-icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                  <path d="M7.2 3.5h5.6l.55 1.35H16v1.6H4v-1.6h2.65L7.2 3.5Z" fill="currentColor" />
+                  <path d="M5.5 7.5h9l-.55 8.25A1.4 1.4 0 0 1 12.55 17h-5.1a1.4 1.4 0 0 1-1.4-1.25L5.5 7.5Z" fill="currentColor" />
+                </svg>
+              </span>
+              <span>Delete chat</span>
             </button>
             <button type="button" className="planner-action-link" onClick={() => setActionMenuId(null)}>
               Cancel
@@ -738,7 +750,6 @@ export default function PlanPage() {
         <Navbar
           onMenuClick={() => setIsSidebarOpen((current) => !current)}
           isMenuOpen={isSidebarOpen}
-          onNewChatClick={() => startNewChatDraft()}
         />
 
         <div className="planner-frame" style={{ minHeight: 0 }}>
@@ -942,62 +953,22 @@ export default function PlanPage() {
           gap: 12px;
         }
 
-        .planner-quick-add {
-          width: 42px;
-          height: 42px;
-          flex: 0 0 42px;
-          padding: 0;
-          border-radius: 14px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(77,211,201,0.08);
-          border: 1px solid rgba(77,211,201,0.18);
-          box-shadow: none;
-          color: var(--accent-2);
-          font-size: 24px;
-          font-weight: 500;
-          line-height: 1;
-        }
-
-        .planner-quick-add:hover:not(:disabled) {
-          background: rgba(77,211,201,0.14);
-          transform: none;
-        }
-
         .planner-menu-button {
           display: none;
-          width: 44px;
+          width: auto;
+          min-width: 44px;
           height: 44px;
-          padding: 0;
-          border-radius: 14px;
-          border: 1px solid rgba(77,211,201,0.18);
-          background: rgba(77,211,201,0.08);
+          padding: 8px;
+          border-radius: 11px;
+          border: 1.5px solid var(--border);
+          background: rgba(31, 39, 64, 0.92);
           box-shadow: none;
           align-items: center;
           justify-content: center;
-          flex-direction: column;
-          gap: 4px;
         }
 
-        .planner-menu-button span {
-          width: 16px;
-          height: 2px;
-          border-radius: 999px;
-          background: var(--accent-2);
-          transition: transform 0.18s ease, opacity 0.18s ease;
-        }
-
-        .planner-menu-button.is-open span:nth-child(1) {
-          transform: translateY(6px) rotate(45deg);
-        }
-
-        .planner-menu-button.is-open span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .planner-menu-button.is-open span:nth-child(3) {
-          transform: translateY(-6px) rotate(-45deg);
+        .planner-menu-button.is-open {
+          box-shadow: 0 4px 22px rgba(77,211,201,0.09);
         }
 
         .planner-dashboard-link {
@@ -1170,7 +1141,7 @@ export default function PlanPage() {
           align-items: center;
           gap: 10px;
           cursor: pointer;
-          transition: background 0.16s ease, border-color 0.16s ease;
+          transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
         }
 
         .planner-conversation:hover {
@@ -1197,13 +1168,32 @@ export default function PlanPage() {
         }
 
         .planner-conversation-more {
-          width: auto;
-          padding: 2px 6px;
-          background: transparent;
-          border: none;
+          width: 34px;
+          height: 34px;
+          flex: 0 0 34px;
+          padding: 0;
+          border-radius: 11px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255,255,255,0.035);
+          border: 1px solid rgba(255,255,255,0.06);
           box-shadow: none;
-          color: #7d8db0;
-          font-size: 18px;
+          color: #92a2c0;
+          transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+        }
+
+        .planner-conversation-more:hover:not(:disabled) {
+          background: rgba(77,211,201,0.12);
+          border-color: rgba(77,211,201,0.28);
+          color: var(--accent-2);
+          transform: none;
+        }
+
+        .planner-conversation-more:focus-visible {
+          outline: none;
+          border-color: rgba(90,160,255,0.6);
+          box-shadow: 0 0 0 3px rgba(90,160,255,0.18);
         }
 
         .planner-empty-side {
@@ -1567,7 +1557,8 @@ export default function PlanPage() {
 
         .planner-modal-backdrop {
           z-index: 1001;
-          background: rgba(8,13,22,0.58);
+          background: rgba(8,13,22,0.62);
+          backdrop-filter: blur(5px);
         }
 
         .planner-modal {
@@ -1587,7 +1578,24 @@ export default function PlanPage() {
         }
 
         .planner-action-modal {
+          width: min(340px, calc(100vw - 24px));
+          padding: 18px;
           gap: 10px;
+        }
+
+        .planner-action-head {
+          display: grid;
+          gap: 4px;
+          padding: 4px 4px 8px;
+          text-align: left;
+        }
+
+        .planner-action-kicker {
+          color: var(--accent-2);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
         }
 
         .planner-modal-title {
@@ -1595,6 +1603,15 @@ export default function PlanPage() {
           font-size: 18px;
           font-weight: 900;
           text-align: center;
+        }
+
+        .planner-action-head .planner-modal-title {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          text-align: left;
+          font-size: 16px;
+          line-height: 1.25;
         }
 
         .planner-modal-copy {
@@ -1628,16 +1645,63 @@ export default function PlanPage() {
 
         .planner-modal-actions .is-danger,
         .planner-action-button.is-danger {
-          background: linear-gradient(135deg, #ff536e, #ff9068) !important;
-          color: #fff !important;
+          background: rgba(255,83,110,0.11) !important;
+          border-color: rgba(255,107,107,0.3) !important;
+          color: #ffb7b7 !important;
         }
 
         .planner-action-button {
           width: 100%;
+          min-height: 46px;
+          padding: 12px 13px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 10px;
+          background: rgba(255,255,255,0.045) !important;
+          border: 1px solid rgba(255,255,255,0.08) !important;
+          box-shadow: none !important;
+          color: var(--text) !important;
+          font-size: 14px;
+          font-weight: 850;
+          text-align: left;
+        }
+
+        .planner-action-button:hover:not(:disabled) {
+          background: rgba(77,211,201,0.1) !important;
+          border-color: rgba(77,211,201,0.26) !important;
+          color: #d8fbf7 !important;
+          transform: none;
+        }
+
+        .planner-action-button.is-danger:hover:not(:disabled) {
+          background: rgba(255,83,110,0.17) !important;
+          border-color: rgba(255,107,107,0.45) !important;
+          color: #ffd7d7 !important;
+        }
+
+        .planner-action-icon {
+          width: 28px;
+          height: 28px;
+          flex: 0 0 28px;
+          border-radius: 10px;
+          display: grid;
+          place-items: center;
+          background: rgba(77,211,201,0.12);
+          color: var(--accent-2);
+        }
+
+        .planner-action-button.is-danger .planner-action-icon {
+          background: rgba(255,107,107,0.16);
+          color: #ffb7b7;
         }
 
         .planner-action-link {
+          width: 100%;
+          min-height: 42px;
           font-size: 14px;
+          border-radius: 14px;
         }
 
         @media (max-width: 980px) {
@@ -1702,12 +1766,12 @@ export default function PlanPage() {
             gap: 8px;
           }
 
-          .planner-quick-add {
-            width: 38px;
-            height: 38px;
-            flex-basis: 38px;
-            border-radius: 12px;
-            font-size: 22px;
+          .planner-action-modal {
+            top: auto;
+            bottom: 10px;
+            transform: translateX(-50%);
+            width: calc(100vw - 20px);
+            border-radius: 20px;
           }
 
           .planner-frame {
