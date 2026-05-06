@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import BrandMark from "@/components/BrandMark";
 import {
   buildPlayerProfileHighlights,
+  hasPlayerProfile,
   normalizePlayerProfile,
   type PlayerProfile,
 } from "@/lib/playerProfile";
@@ -143,6 +144,7 @@ export default function PlanPage() {
   const [err, setErr] = useState<string | null>(null);
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Modal and toast state
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
@@ -163,34 +165,35 @@ export default function PlanPage() {
     setToasterMsg(m); setToasterShow(true);
   }
 
-  async function handleQuickPrompt(prompt: string) {
-    setInput(prompt);
-    if (activeId) return;
+  function startNewChatDraft(nextPrompt = "") {
+    setActiveId(undefined);
+    setMessages([]);
+    setErr(null);
+    setInput(nextPrompt);
+    setIsSidebarOpen(false);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
 
+  function handleQuickPrompt(prompt: string) {
+    startNewChatDraft(prompt);
+  }
+
+  async function realAddConversation(name: string) {
+    setErr(null);
+    setShowNewChatModal(false);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setErr("Not logged in!");
-      showToast("Log in to start a chat.");
-      return;
-    }
-
-    const title = prompt.length > 34 ? `${prompt.slice(0, 31)}...` : prompt;
+    if (!user) { setErr("Not logged in!"); showToast("Not logged in."); return; }
     const { data, error } = await supabase
       .from("conversations")
-      .insert([{ user_id: user.id, title }])
-      .select("*")
-      .single();
-
-    if (error) {
-      setErr(error.message);
-      showToast("Failed to create chat.");
-      return;
-    }
-
-    setConversations((current) => [{ ...data }, ...current]);
+      .insert([{ user_id: user.id, title: name || "Untitled" }])
+      .select("*").single();
+    if (error) { setErr(error.message); showToast("Failed to create chat."); return; }
+    setConversations(cs => [{ ...data }, ...cs]);
     setActiveId(data.id);
     setMessages([]);
     setIsSidebarOpen(false);
+    showToast("New chat created.");
+    setNewChatName("");
   }
 
   // Touch/hold detection for mobile
@@ -210,7 +213,8 @@ export default function PlanPage() {
         .order("created_at", { ascending: false });
       if (error) setErr(error.message || null);
       setConversations(data || []); setLoadingConvs(false);
-      if (data?.length) setActiveId(a => a ?? data[0].id);
+      setActiveId(undefined);
+      setMessages([]);
     })();
   }, []);
   useEffect(() => {
@@ -314,24 +318,6 @@ export default function PlanPage() {
       setSending(false);
       setTimeout(() => scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 200);
     }
-  }
-
-  async function realAddConversation(name: string) {
-    setErr(null);
-    setShowNewChatModal(false);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setErr("Not logged in!"); showToast("Not logged in."); return; }
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert([{ user_id: user.id, title: name || "Untitled" }])
-      .select("*").single();
-    if (error) { setErr(error.message); showToast("Failed to create chat."); return; }
-    setConversations(cs => [{ ...data }, ...cs]);
-    setActiveId(data.id);
-    setMessages([]);
-    setIsSidebarOpen(false);
-    showToast("New chat created.");
-    setNewChatName("");
   }
 
   // --- Rename logic (identical)
@@ -708,6 +694,8 @@ export default function PlanPage() {
   }
 
   const profileHighlights = buildPlayerProfileHighlights(playerProfile);
+  const hasProfileContext = hasPlayerProfile(playerProfile);
+  const activeConversation = conversations.find((conversation) => conversation.id === activeId);
 
   return (
     <Protected>
@@ -733,13 +721,19 @@ export default function PlanPage() {
             <div className="plan-sidebar-header" style={{
               marginBottom: 20, display: "flex", alignItems: "center", gap: 9, justifyContent: "space-between"
             }}>
-              <span className="plan-sidebar-title" style={{
-                fontWeight: 900, fontSize: 21, color: 'var(--accent-2)',
-                letterSpacing: '.06em', marginLeft: 2
-              }}>Recents</span>
+              <div>
+                <span className="plan-sidebar-title" style={{
+                  fontWeight: 900, fontSize: 21, color: 'var(--accent-2)',
+                  letterSpacing: '.06em', marginLeft: 2
+                }}>Recents</span>
+                <div className="plan-sidebar-count">
+                  {loadingConvs ? "Loading chats..." : `${conversations.length} conversation${conversations.length === 1 ? "" : "s"}`}
+                </div>
+              </div>
               <button
-                onClick={() => setShowNewChatModal(true)}
+                onClick={() => startNewChatDraft()}
                 title="Create a new chat"
+                className="plan-primary-button"
                 style={{
                   background: "linear-gradient(126deg, var(--accent-2), #328ec8 85%)",
                   color: "#0f1524", fontWeight: 800, fontSize: 13.5,
@@ -768,6 +762,9 @@ export default function PlanPage() {
                 <Link href="/account" style={{ width: "auto", fontSize: 12.5, fontWeight: 800, color: "var(--accent-2)" }}>
                   Edit
                 </Link>
+              </div>
+              <div className="plan-profile-status">
+                {hasProfileContext ? "Profile connected" : "Profile incomplete"}
               </div>
               {profileHighlights.length > 0 ? (
                 <div className="plan-profile-grid" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
@@ -818,13 +815,21 @@ export default function PlanPage() {
           }}>
             {/* CHAT */}
             <div className="plan-chat-header">
-              <div>
+              <div className="plan-chat-heading">
                 <div className="section-kicker">AI TRAINING COACH</div>
-                <strong>Workout generator</strong>
+                <strong>{activeConversation?.title || "New training chat"}</strong>
+                <p>
+                  Start fresh with a cleaner prompt. Add your goal, time, equipment, and level for sharper basketball plans.
+                </p>
               </div>
-              <div className="plan-chat-status">
-                <span />
-                Profile-aware
+              <div className="plan-chat-meta">
+                <div className="plan-chat-status">
+                  <span />
+                  {hasProfileContext ? "Profile-aware" : "Ready"}
+                </div>
+                <div className="plan-chat-pill">
+                  {activeId ? `${messages.length} messages` : "New chat"}
+                </div>
               </div>
             </div>
             <div ref={scrollRef} className="plan-scroll" style={{
@@ -840,8 +845,13 @@ export default function PlanPage() {
                     color: "var(--muted)", padding: 24, textAlign: "center", fontSize: 16
                   }}>
                     <div className="plan-empty-orb">AI</div>
-                    <h2>Build a precise training plan.</h2>
-                    <p>Pick a starter or write your own request with focus, time, equipment, and intensity.</p>
+                    <h2>Start a new basketball training chat.</h2>
+                    <p>
+                      Choose a suggestion below or write your own prompt. Keep it simple and specific for the best result.
+                    </p>
+                    <div className="plan-suggestion-note">
+                      Try including: position, main goal, number of training days, available equipment, and recovery limits.
+                    </div>
                     <div className="quick-prompt-grid">
                       {QUICK_PROMPTS.map((prompt) => (
                         <button key={prompt} type="button" onClick={() => handleQuickPrompt(prompt)}>
@@ -936,44 +946,51 @@ export default function PlanPage() {
                 {err && <div style={{ color: "var(--error)", fontWeight: 650, fontSize: 14, padding: 7 }}>{err}</div>}
               </div>
             </div>
-            {activeId && (
-              <div className="plan-input-shell" style={{ padding: "0 14px 12px 14px" }}>
-                <form className="plan-composer" onSubmit={handleSend} style={{
-                  maxWidth: 750, margin: "0 auto", padding: "10px 11px", borderRadius: 14,
-                  border: "1.3px solid var(--border)", background: "rgba(16,22,37,0.97)",
-                  display: "flex", alignItems: "flex-end", gap: 10,
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
-                }}>
-                  <textarea
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    placeholder="Type your request, goal or constraint..."
-                    style={{ flex: "1 1 auto", padding: "9px 4px", minHeight: 28, maxHeight: 110,
-                      border: "none", background: "transparent", color: "#ecf8fb", fontSize: 15.4,
-                      fontWeight: 500, boxShadow: "none", resize: "none", lineHeight: 1.52, fontFamily: "inherit",
-                      outline: "none"
-                    }}
-                    disabled={sending} rows={1} required
-                    onKeyDown={e => {
-                      if (e.key === "Enter" && !e.shiftKey && !sending) {
-                        e.preventDefault(); handleSend();
-                      }
-                    }}
-                  />
-                  <button type="submit" disabled={sending || !input.trim()} style={{
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flex: "0 0 32px", height: 32, borderRadius: "50%",
-                    background: "linear-gradient(137deg,#13bfa5,#4fc9bd 120%)",
-                    color: "#022923", border: "none", boxShadow: "0 2px 7px rgba(34,208,189,0.13)",
-                    cursor: sending ? "not-allowed" : "pointer", marginBottom: 2
-                  }} aria-label={sending ? "Generating plan" : "Send message"}>
-                    <svg width="14" height="14" fill="none" viewBox="0 0 20 20"><path
-                      d="M4 10h7M10.7 4.3l4.3 4.2c.4.4.4 1 0 1.4l-4.3 4.2"
-                      stroke="#08514a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </button>
-                </form>
+            <div className="plan-input-shell" style={{ padding: "0 14px 12px 14px" }}>
+              <form className="plan-composer" onSubmit={handleSend} style={{
+                maxWidth: 750, margin: "0 auto", padding: "10px 11px", borderRadius: 14,
+                border: "1.3px solid var(--border)", background: "rgba(16,22,37,0.97)",
+                display: "flex", alignItems: "flex-end", gap: 10,
+                boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
+              }}>
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder="Describe the athlete, goal, equipment, schedule, and any limits..."
+                  style={{ flex: "1 1 auto", padding: "9px 4px", minHeight: 28, maxHeight: 110,
+                    border: "none", background: "transparent", color: "#ecf8fb", fontSize: 15.4,
+                    fontWeight: 500, boxShadow: "none", resize: "none", lineHeight: 1.52, fontFamily: "inherit",
+                    outline: "none"
+                  }}
+                  disabled={sending} rows={1} required
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey && !sending) {
+                      e.preventDefault(); handleSend();
+                    }
+                  }}
+                />
+                <button type="submit" disabled={sending || !input.trim()} style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flex: "0 0 32px", height: 32, borderRadius: "50%",
+                  background: "linear-gradient(137deg,#13bfa5,#4fc9bd 120%)",
+                  color: "#022923", border: "none", boxShadow: "0 2px 7px rgba(34,208,189,0.13)",
+                  cursor: sending ? "not-allowed" : "pointer", marginBottom: 2
+                }} aria-label={sending ? "Generating plan" : "Send message"}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 20 20"><path
+                    d="M4 10h7M10.7 4.3l4.3 4.2c.4.4.4 1 0 1.4l-4.3 4.2"
+                    stroke="#08514a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+              </form>
+              <div className="plan-composer-footer">
+                <span>
+                  {hasProfileContext
+                    ? "Profile context is active. The AI can tailor output more precisely."
+                    : "Add a player profile in Account to get more personalized training plans."}
+                </span>
+                <span>Press `Enter` to send.</span>
               </div>
-            )}
+            </div>
           </section>
         </div>
         <style>{`
