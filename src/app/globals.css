@@ -2522,8 +2522,8 @@ body, html {
 /* Final mobile planner fix for iPhone Safari demo reliability */
 @supports (-webkit-touch-callout: none) {
   .plan-page-shell {
-    height: 100dvh !important;
-    min-height: 100dvh !important;
+    height: var(--plan-vvh, 100dvh) !important;
+    min-height: var(--plan-vvh, 100dvh) !important;
   }
 }
 
@@ -2535,9 +2535,9 @@ body, html {
   }
 
   .plan-page-shell {
-    height: 100dvh !important;
-    min-height: 100dvh !important;
-    max-height: 100dvh !important;
+    height: var(--plan-vvh, 100dvh) !important;
+    min-height: var(--plan-vvh, 100dvh) !important;
+    max-height: var(--plan-vvh, 100dvh) !important;
     overflow: hidden !important;
   }
 
@@ -2551,8 +2551,8 @@ body, html {
 
   .plan-shell {
     width: calc(100vw - 12px) !important;
-    height: calc(100dvh - 58px) !important;
-    max-height: calc(100dvh - 58px) !important;
+    height: calc(var(--plan-vvh, 100dvh) - 58px) !important;
+    max-height: calc(var(--plan-vvh, 100dvh) - 58px) !important;
     margin: 0 auto !important;
   }
 
@@ -2647,8 +2647,8 @@ body, html {
 @media (max-width: 700px) {
   .saved-plan-modal {
     width: calc(100vw - 14px) !important;
-    max-height: calc(100dvh - 14px) !important;
-    height: calc(100dvh - 14px) !important;
+    max-height: calc(var(--plan-vvh, 100dvh) - 14px) !important;
+    height: calc(var(--plan-vvh, 100dvh) - 14px) !important;
     border-radius: 18px !important;
     background: linear-gradient(180deg, rgba(22,31,51,0.99), rgba(10,15,26,0.99)) !important;
   }
@@ -3026,9 +3026,9 @@ body, html {
   .plan-page-shell {
     display: grid !important;
     grid-template-rows: auto 1fr !important;
-    height: 100dvh !important;
-    min-height: 100dvh !important;
-    max-height: 100dvh !important;
+    height: var(--plan-vvh, 100dvh) !important;
+    min-height: var(--plan-vvh, 100dvh) !important;
+    max-height: var(--plan-vvh, 100dvh) !important;
     overflow: hidden !important;
   }
 
@@ -3182,6 +3182,6 @@ body, html {
 
   .app-sidebar {
     top: 62px !important;
-    height: calc(100dvh - 70px) !important;
+    height: calc(var(--plan-vvh, 100dvh) - 70px) !important;
   }
 }

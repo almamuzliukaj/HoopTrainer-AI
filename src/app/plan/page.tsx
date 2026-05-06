@@ -230,6 +230,37 @@ export default function PlanPage() {
     })();
   }, [activeId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+
+    function applyViewportHeight() {
+      const nextHeight = viewport?.height ?? window.innerHeight;
+      root.style.setProperty("--plan-vvh", `${nextHeight}px`);
+    }
+
+    applyViewportHeight();
+
+    if (viewport) {
+      viewport.addEventListener("resize", applyViewportHeight);
+      viewport.addEventListener("scroll", applyViewportHeight);
+    } else {
+      window.addEventListener("resize", applyViewportHeight);
+    }
+
+    return () => {
+      if (viewport) {
+        viewport.removeEventListener("resize", applyViewportHeight);
+        viewport.removeEventListener("scroll", applyViewportHeight);
+      } else {
+        window.removeEventListener("resize", applyViewportHeight);
+      }
+      root.style.removeProperty("--plan-vvh");
+    };
+  }, []);
+
   // --- Main actions
   async function handleSend(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -705,11 +736,11 @@ export default function PlanPage() {
       {renderDeleteConfirmModal()}
       {renderNewChatModal()}
       <SidebarOverlay />
-      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "100dvh" }}>
+      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "var(--plan-vvh, 100dvh)" }}>
         <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isMenuOpen={isSidebarOpen} />
         <div className="page-frame plan-shell" style={{
           display: "flex", alignItems: "stretch",
-          height: "calc(100dvh - 72px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative", minHeight: 0
+          height: "calc(var(--plan-vvh, 100dvh) - 72px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative", minHeight: 0
         }}>
           <aside className={`app-sidebar plan-sidebar ${isSidebarOpen ? "open" : ""}`} style={{
             flex: "0 0 240px", maxWidth: 340, minWidth: 240,
