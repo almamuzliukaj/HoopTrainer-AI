@@ -1,10 +1,11 @@
 "use client";
-import { useRef, useEffect, useState } from "react";
-import { Protected } from "@/components/Protected";
-import { supabase } from "@/lib/supabaseClient";
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import BrandMark from "@/components/BrandMark";
+import { Protected } from "@/components/Protected";
+import { supabase } from "@/lib/supabaseClient";
 import {
   buildPlayerProfileHighlights,
   hasPlayerProfile,
@@ -12,79 +13,25 @@ import {
   type PlayerProfile,
 } from "@/lib/playerProfile";
 
-// ========== Toaster =============
-function Toaster({ message, show, onHide }: { message: string; show: boolean; onHide: () => void }) {
-  useEffect(() => {
-    if (show) {
-      const t = setTimeout(onHide, 2100);
-      return () => clearTimeout(t);
-    }
-  }, [show, onHide]);
-  return (
-    <div
-      style={{
-        position: "fixed",
-        left: "50%",
-        bottom: 44,
-        transform: "translateX(-50%)",
-        zIndex: 2000,
-        pointerEvents: "none",
-        opacity: show ? 1 : 0,
-        transition: "opacity 0.36s cubic-bezier(.46,.03,.52,.96)",
-      }}
-    >
-      <div
-        style={{
-          background: "linear-gradient(135deg,#19e6be,#33aadd 120%)",
-          color: "#00303a",
-          fontWeight: 700,
-          fontSize: 15.7,
-          borderRadius: 15,
-          padding: "11px 26px",
-          boxShadow: "0px 4px 26px 0px #20fdd5c7,0px 1px 9px #0fbede1e",
-          opacity: 0.94,
-          letterSpacing: ".02em",
-        }}
-      >
-        {message}
-      </div>
-    </div>
-  );
-}
+type Conversation = {
+  id: string;
+  title: string;
+  user_id?: string;
+  created_at?: string;
+};
 
-// ===== NAVBAR =====
-function Navbar({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) {
-  return (
-    <nav className="glass-topbar plan-topbar" style={{
-      position: "sticky", top: 0, zIndex: 30,
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "10px 14px", minHeight: 56
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button
-          className={`mobile-menu-btn${isMenuOpen ? " is-open" : ""}`}
-          onClick={onMenuClick}
-          aria-label={isMenuOpen ? "Close recent chats" : "Open recent chats"}
-          aria-expanded={isMenuOpen}
-          style={{
-          background: "transparent", border: "none", color: "white",
-          fontSize: 16, cursor: "pointer", padding: "4px 6px", display: "none", alignItems: "center"
-        }}>☰</button>
-        <BrandMark size="sm" />
-      </div>
-      <Link href="/dashboard" style={{
-        padding: "7px 18px", borderRadius: 8, border: "1.3px solid var(--accent-2)",
-        background: "linear-gradient(135deg,rgba(79,201,189,0.07) 92%,#222e4b 100%)",
-        color: "var(--accent-2)", fontWeight: 800, textDecoration: "none", fontSize: 14.9,
-        boxShadow: "0 2px 6px rgba(79,201,189,0.065)", transition: "background 0.17s"
-      }}>Dashboard</Link>
-    </nav>
-  );
-}
+type Message = {
+  id: string;
+  conversation_id: string;
+  role: "user" | "ai";
+  content: string;
+  created_at?: string;
+};
 
-type Conversation = { id: string; title: string; user_id?: string; created_at?: string };
-type Message = { id: string; conversation_id: string; role: "user" | "ai"; content: string; created_at?: string };
-type ApiChatMessage = { role: "user" | "assistant"; content: string };
+type ApiChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 const QUICK_PROMPTS = [
   "Build me a 45-minute shooting workout for today.",
@@ -105,25 +52,25 @@ function buildSavedPlanTitle(content: string) {
 
 const markdownComponents = {
   p: ({ children }: { children?: React.ReactNode }) => (
-    <p style={{ margin: "0 0 0.7rem", lineHeight: 1.7 }}>{children}</p>
+    <p style={{ margin: "0 0 0.8rem", lineHeight: 1.72 }}>{children}</p>
   ),
   ul: ({ children }: { children?: React.ReactNode }) => (
-    <ul style={{ margin: "0.4rem 0 0.75rem", paddingLeft: "1.25rem" }}>{children}</ul>
+    <ul style={{ margin: "0.35rem 0 0.85rem", paddingLeft: "1.2rem" }}>{children}</ul>
   ),
   ol: ({ children }: { children?: React.ReactNode }) => (
-    <ol style={{ margin: "0.4rem 0 0.75rem", paddingLeft: "1.25rem" }}>{children}</ol>
+    <ol style={{ margin: "0.35rem 0 0.85rem", paddingLeft: "1.2rem" }}>{children}</ol>
   ),
   li: ({ children }: { children?: React.ReactNode }) => (
     <li style={{ marginBottom: "0.35rem" }}>{children}</li>
   ),
   strong: ({ children }: { children?: React.ReactNode }) => (
-    <strong style={{ color: "#f6fcff" }}>{children}</strong>
+    <strong style={{ color: "#f7fbff" }}>{children}</strong>
   ),
   code: ({ children }: { children?: React.ReactNode }) => (
     <code
       style={{
         background: "rgba(255,255,255,0.08)",
-        padding: "0.15rem 0.35rem",
+        padding: "0.14rem 0.35rem",
         borderRadius: 6,
         fontSize: "0.92em",
       }}
@@ -132,6 +79,70 @@ const markdownComponents = {
     </code>
   ),
 };
+
+function Toaster({
+  message,
+  show,
+  onHide,
+}: {
+  message: string;
+  show: boolean;
+  onHide: () => void;
+}) {
+  useEffect(() => {
+    if (!show) return;
+    const timeout = setTimeout(onHide, 2200);
+    return () => clearTimeout(timeout);
+  }, [show, onHide]);
+
+  return (
+    <div className={`planner-toast${show ? " is-visible" : ""}`}>
+      <div className="planner-toast-pill">{message}</div>
+    </div>
+  );
+}
+
+function Navbar({
+  onMenuClick,
+  isMenuOpen,
+  onNewChatClick,
+}: {
+  onMenuClick: () => void;
+  isMenuOpen: boolean;
+  onNewChatClick: () => void;
+}) {
+  return (
+    <nav className="planner-topbar">
+      <div className="planner-topbar-left">
+        <button
+          type="button"
+          className={`planner-menu-button${isMenuOpen ? " is-open" : ""}`}
+          onClick={onMenuClick}
+          aria-label={isMenuOpen ? "Close conversations" : "Open conversations"}
+          aria-expanded={isMenuOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <button
+          type="button"
+          className="planner-quick-add"
+          onClick={onNewChatClick}
+          aria-label="Start new chat"
+        >
+          +
+        </button>
+        <BrandMark size="sm" />
+      </div>
+      <div className="planner-topbar-right">
+        <Link href="/dashboard" className="planner-dashboard-link">
+          Dashboard
+        </Link>
+      </div>
+    </nav>
+  );
+}
 
 export default function PlanPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -143,26 +154,28 @@ export default function PlanPage() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile>({});
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Modal and toast state
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
   const [isRenameModal, setIsRenameModal] = useState(false);
   const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [toasterMsg, setToasterMsg] = useState('');
+  const [toasterMsg, setToasterMsg] = useState("");
   const [toasterShow, setToasterShow] = useState(false);
   const [savingPlanId, setSavingPlanId] = useState<string | null>(null);
-
-  // New Chat input modal state:
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatName, setNewChatName] = useState("");
 
-  function showToast(m: string) {
-    setToasterMsg(m); setToasterShow(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const holdTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const isTouchDevice = () =>
+    typeof window !== "undefined" && (("ontouchstart" in window) || navigator.maxTouchPoints > 0);
+
+  function showToast(message: string) {
+    setToasterMsg(message);
+    setToasterShow(true);
   }
 
   function startNewChatDraft(nextPrompt = "") {
@@ -171,62 +184,60 @@ export default function PlanPage() {
     setErr(null);
     setInput(nextPrompt);
     setIsSidebarOpen(false);
-    setTimeout(() => inputRef.current?.focus(), 50);
+    setTimeout(() => inputRef.current?.focus(), 40);
   }
 
   function handleQuickPrompt(prompt: string) {
     startNewChatDraft(prompt);
   }
 
-  async function realAddConversation(name: string) {
-    setErr(null);
-    setShowNewChatModal(false);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setErr("Not logged in!"); showToast("Not logged in."); return; }
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert([{ user_id: user.id, title: name || "Untitled" }])
-      .select("*").single();
-    if (error) { setErr(error.message); showToast("Failed to create chat."); return; }
-    setConversations(cs => [{ ...data }, ...cs]);
-    setActiveId(data.id);
-    setMessages([]);
-    setIsSidebarOpen(false);
-    showToast("New chat created.");
-    setNewChatName("");
-  }
-
-  // Touch/hold detection for mobile
-  const holdTimer = useRef<NodeJS.Timeout | null>(null);
-  const isTouchDevice = () =>
-    typeof window !== "undefined" && (("ontouchstart" in window) || navigator.maxTouchPoints > 0);
-
-  // Fetch conversations/messages
   useEffect(() => {
     (async () => {
-      setLoadingConvs(true); setErr(null);
+      setLoadingConvs(true);
+      setErr(null);
+
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setConversations([]); setLoadingConvs(false); setErr("Not logged in!"); return; }
+      if (!user) {
+        setConversations([]);
+        setLoadingConvs(false);
+        setErr("Not logged in!");
+        return;
+      }
+
       setPlayerProfile(normalizePlayerProfile(user.user_metadata?.playerProfile));
+
       const { data, error } = await supabase
-        .from("conversations").select("*").eq("user_id", user.id)
+        .from("conversations")
+        .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+
       if (error) setErr(error.message || null);
-      setConversations(data || []); setLoadingConvs(false);
+
+      setConversations(data || []);
+      setLoadingConvs(false);
       setActiveId(undefined);
       setMessages([]);
     })();
   }, []);
+
   useEffect(() => {
     if (!activeId) return;
+
     (async () => {
-      setLoadingMsgs(true); setErr(null);
+      setLoadingMsgs(true);
+      setErr(null);
+
       const { data, error } = await supabase
-        .from("messages").select("*").eq("conversation_id", activeId)
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", activeId)
         .order("created_at", { ascending: true });
+
       if (error) setErr(error.message);
-      setMessages(data || []); setLoadingMsgs(false);
-      setTimeout(() => scrollRef.current?.scrollTo({ top: 99999 }), 120);
+      setMessages(data || []);
+      setLoadingMsgs(false);
+      setTimeout(() => scrollRef.current?.scrollTo({ top: 99999 }), 80);
     })();
   }, [activeId]);
 
@@ -236,80 +247,148 @@ export default function PlanPage() {
     const root = document.documentElement;
     const viewport = window.visualViewport;
 
-    function applyViewportHeight() {
+    function syncViewportHeight() {
       const nextHeight = viewport?.height ?? window.innerHeight;
-      root.style.setProperty("--plan-vvh", `${nextHeight}px`);
+      root.style.setProperty("--planner-vvh", `${nextHeight}px`);
     }
 
-    applyViewportHeight();
+    syncViewportHeight();
 
     if (viewport) {
-      viewport.addEventListener("resize", applyViewportHeight);
-      viewport.addEventListener("scroll", applyViewportHeight);
+      viewport.addEventListener("resize", syncViewportHeight);
+      viewport.addEventListener("scroll", syncViewportHeight);
     } else {
-      window.addEventListener("resize", applyViewportHeight);
+      window.addEventListener("resize", syncViewportHeight);
     }
 
     return () => {
       if (viewport) {
-        viewport.removeEventListener("resize", applyViewportHeight);
-        viewport.removeEventListener("scroll", applyViewportHeight);
+        viewport.removeEventListener("resize", syncViewportHeight);
+        viewport.removeEventListener("scroll", syncViewportHeight);
       } else {
-        window.removeEventListener("resize", applyViewportHeight);
+        window.removeEventListener("resize", syncViewportHeight);
       }
-      root.style.removeProperty("--plan-vvh");
+      root.style.removeProperty("--planner-vvh");
     };
   }, []);
 
-  // --- Main actions
+  useEffect(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    textarea.style.height = "0px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`;
+  }, [input]);
+
+  useEffect(() => {
+    function onEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setIsRenameModal(false);
+      setActionMenuId(null);
+      setConfirmDeleteId(null);
+      setShowNewChatModal(false);
+      setRenameTargetId(null);
+    }
+
+    if (actionMenuId || isRenameModal || confirmDeleteId || showNewChatModal) {
+      document.addEventListener("keydown", onEscape);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", onEscape);
+      document.body.style.overflow = "";
+    };
+  }, [actionMenuId, isRenameModal, confirmDeleteId, showNewChatModal]);
+
   async function handleSend(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (sending || !input.trim()) return;
-    setSending(true); setErr(null);
+
+    setSending(true);
+    setErr(null);
+
     let convId = activeId;
     const { data: { user } } = await supabase.auth.getUser();
-    const automaticTitle = input.length > 25 ? input.slice(0, 25) + "..." : input;
+    const automaticTitle = input.length > 25 ? `${input.slice(0, 25)}...` : input;
+
     if (!convId) {
-      if (!user) { setErr("Not logged in!"); setSending(false); return; }
+      if (!user) {
+        setErr("Not logged in!");
+        setSending(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("conversations")
         .insert([{ user_id: user.id, title: automaticTitle || "Untitled" }])
-        .select("*").single();
-      if (error) { setErr(error.message); setSending(false); return; }
+        .select("*")
+        .single();
+
+      if (error) {
+        setErr(error.message);
+        setSending(false);
+        return;
+      }
+
       convId = data.id;
-      setConversations(cs => [{ ...data }, ...cs]);
+      setConversations((current) => [{ ...data }, ...current]);
       setActiveId(convId);
     } else {
-      // If conversation exists, but has no title or is "Untitled", set name to the first user message.
-      const convo = conversations.find(c => c.id === convId);
-      if (convo && (!convo.title || convo.title.trim().toLowerCase() === "untitled" || convo.title.trim() === "")) {
+      const conversation = conversations.find((item) => item.id === convId);
+      if (conversation && (!conversation.title || conversation.title.trim().toLowerCase() === "untitled")) {
         const { error } = await supabase
           .from("conversations")
           .update({ title: automaticTitle || "Untitled" })
           .eq("id", convId);
-        if (!error)
-          setConversations(cs => cs.map(c => c.id === convId ? { ...c, title: automaticTitle || "Untitled" } : c));
+
+        if (!error) {
+          setConversations((current) =>
+            current.map((item) =>
+              item.id === convId ? { ...item, title: automaticTitle || "Untitled" } : item
+            )
+          );
+        }
       }
     }
 
-    // Insert user message right away
-    const { error: err1 } = await supabase
-      .from("messages").insert([{ conversation_id: convId, role: "user", content: input }]);
-    if (err1) { setErr(err1.message); setSending(false); return; }
-    setMessages(ms => [...ms, {
-      id: Math.random().toString(32).slice(2),
-      conversation_id: convId!, role: 'user', content: input, created_at: new Date().toISOString()
-    }]);
-    const promptToSend = input;
-    setInput("");
-    try {
-      const apiMessages: ApiChatMessage[] = [...messages, {
+    const userMessage = input;
+
+    const { error: insertUserError } = await supabase
+      .from("messages")
+      .insert([{ conversation_id: convId, role: "user", content: userMessage }]);
+
+    if (insertUserError) {
+      setErr(insertUserError.message);
+      setSending(false);
+      return;
+    }
+
+    setMessages((current) => [
+      ...current,
+      {
         id: Math.random().toString(32).slice(2),
         conversation_id: convId!,
         role: "user",
-        content: promptToSend,
+        content: userMessage,
         created_at: new Date().toISOString(),
-      }].map((message) => ({
+      },
+    ]);
+
+    setInput("");
+
+    try {
+      const apiMessages: ApiChatMessage[] = [
+        ...messages,
+        {
+          id: Math.random().toString(32).slice(2),
+          conversation_id: convId!,
+          role: "user",
+          content: userMessage,
+          created_at: new Date().toISOString(),
+        },
+      ].map((message) => ({
         role: message.role === "ai" ? "assistant" : "user",
         content: message.content,
       }));
@@ -322,375 +401,40 @@ export default function PlanPage() {
           profile: normalizePlayerProfile(playerProfile),
         }),
       });
-      let aiMsg = "";
+
       if (!res.ok) {
-        // THIS IS THE FIX: Show backend error message, no supabase insert for AI
         const data = await res.json();
-        aiMsg = data.error || "AI failed to respond. Try again later.";
-        setErr(aiMsg);
-        showToast(aiMsg);
+        const message = data.error || "AI failed to respond. Try again later.";
+        setErr(message);
+        showToast(message);
         setSending(false);
         return;
-      } else {
-        const data = await res.json();
-        aiMsg = data.text || data.html || "AI didn't generate anything.";
-        await supabase.from("messages")
-          .insert([{ conversation_id: convId, role: "ai", content: aiMsg }]);
-        setMessages(ms => [...ms, {
-          id: Math.random().toString(32).slice(2),
-          conversation_id: convId!, role: 'ai', content: aiMsg, created_at: new Date().toISOString()
-        }]);
-        showToast("AI response added");
       }
+
+      const data = await res.json();
+      const aiMsg = data.text || data.html || "AI did not generate anything.";
+
+      await supabase.from("messages").insert([{ conversation_id: convId, role: "ai", content: aiMsg }]);
+
+      setMessages((current) => [
+        ...current,
+        {
+          id: Math.random().toString(32).slice(2),
+          conversation_id: convId!,
+          role: "ai",
+          content: aiMsg,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      showToast("AI response added");
     } catch {
       setErr("Network error");
       showToast("Error sending message.");
     } finally {
       setSending(false);
-      setTimeout(() => scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 200);
+      setTimeout(() => scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 120);
     }
-  }
-
-  // --- Rename logic (identical)
-  async function doRename(id: string, value: string) {
-    setIsRenameModal(false);
-    setActionMenuId(null);
-    setRenameTargetId(null);
-    const name = value.trim();
-    if (!name) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setErr("Not logged in!"); showToast("Rename failed."); return; }
-    const existing = conversations.find(c => c.id === id && c.user_id === user.id);
-    if (!existing) { setErr("You can only rename your own chats."); showToast("Rename failed."); return; }
-    const { error } = await supabase.from("conversations").update({ title: name }).eq("id", id).eq("user_id", user.id);
-    if (!error) {
-      const { data } = await supabase.from("conversations").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-      setConversations(data || []);
-      showToast("Renamed!");
-    } else {
-      setErr("Rename failed: " + error.message); showToast("Rename failed.");
-    }
-  }
-  // --- Actually delete, after confirmation
-  async function actuallyDeleteConversation(id: string) {
-    setConfirmDeleteId(null);
-    setActionMenuId(null);
-    setIsRenameModal(false);
-    setRenameTargetId(null);
-    setErr(null);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setErr("Not logged in!"); showToast("Not logged in."); return; }
-    const existing = conversations.find(c => c.id === id && c.user_id === user.id);
-    if (!existing) { setErr("You can only delete your own chats."); showToast("Delete failed."); return; }
-    await supabase.from("messages").delete().eq("conversation_id", id);
-    const { error } = await supabase.from("conversations").delete().eq("id", id).eq("user_id", user.id);
-    if (!error) {
-      const { data } = await supabase.from("conversations").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-      setConversations(data || []);
-      if (activeId === id) {
-        setActiveId(data?.[0]?.id);
-        setMessages([]);
-      }
-      showToast("Chat deleted.");
-    } else {
-      setErr("Delete failed: " + error.message); showToast("Delete failed.");
-    }
-  }
-
-  // Modal/Sheet: Escape, overlay
-  useEffect(() => {
-    function esc(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setIsRenameModal(false);
-        setActionMenuId(null);
-        setConfirmDeleteId(null);
-        setShowNewChatModal(false);
-        setRenameTargetId(null);
-      }
-    }
-    if (actionMenuId || isRenameModal || confirmDeleteId || showNewChatModal) {
-      document.addEventListener("keydown", esc);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.removeEventListener("keydown", esc);
-      document.body.style.overflow = "";
-    }
-    return () => { document.removeEventListener("keydown", esc); document.body.style.overflow = ""; };
-  }, [actionMenuId, isRenameModal, confirmDeleteId, showNewChatModal]);
-
-  // Overlay for closing sidebar by clicking outside it
-  function SidebarOverlay() {
-    if (!isSidebarOpen) return null;
-    return (
-      <div
-        onClick={() => setIsSidebarOpen(false)}
-        style={{
-          position: "fixed", zIndex: 49, inset: 0,
-          background: "rgba(8,13,22,0.24)",
-          cursor: "pointer"
-        }}
-        aria-label="Close sidebar"
-      />
-    );
-  }
-
-  // New Chat Modal
-  function renderNewChatModal() {
-    if (!showNewChatModal) return null;
-    return (
-      <>
-        <div
-          style={{
-            position: "fixed", inset: 0, zIndex: 1020,
-            background: "rgba(12,18,27,0.55)"
-          }} onClick={() => {setShowNewChatModal(false); setNewChatName("");}} />
-        <div
-          style={{
-            position: "fixed", left: "50%", top: "50%",
-            transform: "translate(-50%,-50%)",
-            zIndex: 1025,
-            background: "#18212c",
-            minWidth: 330,
-            borderRadius: 21,
-            padding: "32px 24px 19px 24px",
-            boxShadow: "0 10px 32px rgba(44,252,208,.13), 0 2px 12px #0e161d8a",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 21
-          }}>
-          <div
-            style={{
-              fontSize: 18,
-              fontWeight: 900,
-              color: "#27ffd1",
-              marginBottom: 2
-            }}
-          >Name your chat</div>
-          <input
-            autoFocus
-            value={newChatName}
-            onChange={e => setNewChatName(e.target.value)}
-            placeholder="e.g. Shooting drills for 3-point improvement"
-            style={{
-              border: "1.4px solid #36d4c6",
-              background: "#232b3a", color: "#dbfff3", fontWeight: 700,
-              borderRadius: 8, fontSize: 15.7, padding: "11px 8px",
-              marginBottom: 7, width: "100%", maxWidth: 240,
-              outline: "none"
-            }}
-            onKeyDown={e => {
-              if (e.key === "Enter") {
-                realAddConversation(newChatName.trim());
-              }
-            }}
-          />
-          <div style={{ display: "flex", gap: 14 }}>
-            <button
-              onClick={() => realAddConversation(newChatName.trim())}
-              style={{
-                padding: "8px 28px", background: "linear-gradient(123deg, #20e9c9 80%, #146db6 100%)",
-                color: "#212d2d", border: "none", borderRadius: 7, fontWeight: 900, fontSize: 15
-              }}
-            >Create</button>
-            <button
-              onClick={() => {setShowNewChatModal(false); setNewChatName("");}}
-              style={{
-                padding: "8px 18px", background: "#293040",
-                color: "#76cacc", border: "none", borderRadius: 7, fontWeight: 900, fontSize: 15
-              }}
-            >Cancel</button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  function renderActionMenu() {
-    if (!actionMenuId) return null;
-    const c = conversations.find(x => x.id === actionMenuId);
-    if (!c) return null;
-    const displayName = c.title?.trim() ? c.title : "Untitled";
-    return (
-      <>
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 1001, background: "rgba(12,18,27,0.45)",
-          display: "flex", justifyContent: "center", alignItems: "center"
-        }} onClick={() => setActionMenuId(null)} />
-        <div style={{
-          position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
-          zIndex: 1002, background: "#212d43", boxShadow: "0 10px 38px -8px #121b26",
-          borderRadius: 20, minWidth: 300, maxWidth: 97, minHeight: 158, padding: "30px 28px 12px 28px",
-          display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12
-        }}>
-          <div style={{
-            fontWeight: 700, color: "#24f0c6", fontSize: 16, marginBottom: 10, textAlign: "center", letterSpacing: ".01em",
-            textShadow: "0px 2px 16px #1861494d"
-          }}>{displayName}</div>
-          <button
-            onClick={() => {
-              setRenameTargetId(c.id);
-              setIsRenameModal(true);
-              setActionMenuId(null);
-              setRenameValue(displayName);
-            }}
-            style={{
-              background: "#1e283a", color: "#baf7ea", border: "none",
-              borderRadius: 7, fontWeight: 900, fontSize: 16, padding: "13px 3px", marginBottom: 4,
-              boxShadow: "0 1px 8px #00d7b22e", outline: "none", transition: ".13s"
-            }}
-          >Rename Conversation</button>
-          <button
-            onClick={() => { setConfirmDeleteId(c.id); setActionMenuId(null);} }
-            style={{
-              background: "#281a20", color: "#ff7e7e", border: "none",
-              borderRadius: 7, fontWeight: 900, fontSize: 16, padding: "13px 3px"
-            }}
-          >Delete</button>
-          <button
-            onClick={() => setActionMenuId(null)}
-            style={{
-              background: "none", color: "#7eced6", border: "none", fontSize: 15, padding: 10, marginTop: 3
-            }}
-          >Cancel</button>
-        </div>
-      </>
-    );
-  }
-
-  function renderRenameModal() {
-    if (!isRenameModal) return null;
-    return (
-      <>
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 2001, background: "rgba(20,32,48,0.56)"
-        }} onClick={() => { setIsRenameModal(false); setRenameTargetId(null); }}/>
-        <div style={{
-          position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
-          zIndex: 2002, background: "#222a36", boxShadow: "0 10px 38px -8px #121b26", borderRadius: 18,
-          minWidth: 335, maxWidth: 97, minHeight: 158, padding: "35px 22px 24px 22px",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 15
-        }}>
-          <div style={{
-            color: "#21e0ac", fontWeight: 800, fontSize: 18, letterSpacing: ".001em", marginBottom: 0
-          }}>Rename Conversation</div>
-          <input
-            autoFocus
-            placeholder="New conversation name"
-            value={renameValue}
-            onChange={e => setRenameValue(e.target.value)}
-            style={{
-              padding: "12px 10px", fontSize: 15, borderRadius: 10, border: "1.5px solid #29f1d1",
-              background: "#1a2448", color: "#d4ffe1", fontWeight: 700, marginBottom: 6, outline: "none", minWidth: 210
-            }}
-            onKeyDown={(e) => { if (e.key === "Enter" && renameTargetId) doRename(renameTargetId, renameValue); }}
-          />
-          <div style={{ display: "flex", gap: 16 }}>
-            <button
-              onClick={() => renameTargetId && doRename(renameTargetId, renameValue)}
-              style={{
-                padding: "8px 26px", background: "linear-gradient(135deg, #15f7c1 80%, #168ad1 120%)",
-                border: "none", borderRadius: 8, color: "#003d37", fontWeight: 900, fontSize: 15
-              }}>Rename</button>
-            <button
-              onClick={() => { setIsRenameModal(false); setRenameTargetId(null); }}
-              style={{
-                padding: "8px 20px", background: "#1f2326",
-                border: "none", borderRadius: 8, color: "#7bc8ce", fontWeight: 800, fontSize: 15
-              }}>Cancel</button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  function renderDeleteConfirmModal() {
-    if (!confirmDeleteId) return null;
-    const c = conversations.find(x => x.id === confirmDeleteId);
-    return (
-      <>
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 3001, background: "rgba(30,38,46,.6)"
-        }} onClick={() => setConfirmDeleteId(null)}/>
-        <div style={{
-          position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
-          zIndex: 3002, background: "#232b38", boxShadow: "0 12px 40px -8px #121b26",
-          borderRadius: 22, minWidth: 345, padding: "36px 28px 22px 28px",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 20
-        }}>
-          <div style={{
-            color: "#ff6a82", fontWeight: 900, fontSize: 19, letterSpacing: ".01em", marginBottom: 2,
-            textShadow: "0px 2px 10px #7d354d38"
-          }}>
-            Delete chat?
-          </div>
-          <div style={{ color: "#c2e5e0", fontSize: 15.5, marginBottom: 3, textAlign: "center" }}>
-            Are you sure you want to delete <span style={{fontWeight:800,color:"#27eed7"}}>{c?.title || "this chat"}</span>?
-            <br/>This can’t be undone.
-          </div>
-          <div style={{ display: "flex", gap: 16 }}>
-            <button
-              onClick={() => actuallyDeleteConversation(confirmDeleteId)}
-              style={{
-                padding: "10px 30px", background: "linear-gradient(100deg, #ff366a 60%, #f27c66 120%)",
-                border: "none", borderRadius: 8, color: "#ffeef7", fontWeight: 900, fontSize: 15, boxShadow: "0 1px 11px #f2105e31"
-              }}>
-              Delete
-            </button>
-            <button
-              onClick={() => setConfirmDeleteId(null)}
-              style={{
-                padding: "10px 18px", background: "#181b33",
-                border: "none", borderRadius: 8, color: "#b6cddb", fontWeight: 800, fontSize: 15
-              }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  function renderConversationRow(c: Conversation) {
-    const displayName = c.title?.trim() ? c.title : "Untitled";
-    const isActive = activeId === c.id;
-    function handleTouchStart() {
-      if (holdTimer.current) clearTimeout(holdTimer.current);
-      holdTimer.current = setTimeout(() => { setActionMenuId(c.id); }, 500);
-    }
-    function handleTouchEnd() { if (holdTimer.current) clearTimeout(holdTimer.current); }
-    function handleTouchMove() { if (holdTimer.current) clearTimeout(holdTimer.current); }
-    return (
-      <div
-        key={c.id}
-        className={`plan-conversation-row${isActive ? " is-active" : ""}`}
-        style={{
-          display: "flex", alignItems: "center", background: isActive ? "rgba(48,189,186, 0.15)" : "transparent",
-          border: isActive ? "1.5px solid var(--accent-2)" : "1.5px solid transparent",
-          borderRadius: 8, position: "relative", padding: "10px 8px",
-          fontWeight: 500, fontSize: "14.5px", color: isActive ? "var(--accent-2)" : "var(--text)",
-          cursor: "pointer", transition: "all 0.13s", userSelect: "none"
-        }}
-        onClick={() => { setActiveId(c.id); setErr(null); }}
-        onTouchStart={isTouchDevice() ? handleTouchStart : undefined}
-        onTouchEnd={isTouchDevice() ? handleTouchEnd : undefined}
-        onTouchMove={isTouchDevice() ? handleTouchMove : undefined}
-      >
-        <span style={{
-          flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
-          paddingRight: 5, fontWeight: isActive ? 700 : 500
-        }} title={displayName}>{displayName}</span>
-        <div style={{ position: "relative", zIndex: 65 }}>
-          <button
-            onClick={e => { e.stopPropagation(); setActionMenuId(c.id); }}
-            className="plan-conversation-more"
-            style={{
-              background: "none", border: "none", color: isActive ? "var(--accent-2)" : "#6b7dab",
-              fontSize: 18, cursor: "pointer", padding: "0 4px", lineHeight: 1
-            }}
-            title="Options"
-            tabIndex={0}
-          >⋮</button>
-        </div>
-      </div>
-    );
   }
 
   async function saveTrainingPlan(message: Message) {
@@ -724,166 +468,361 @@ export default function PlanPage() {
     showToast("Training plan saved.");
   }
 
+  async function doRename(id: string, value: string) {
+    setIsRenameModal(false);
+    setActionMenuId(null);
+    setRenameTargetId(null);
+    const name = value.trim();
+    if (!name) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setErr("Not logged in!");
+      showToast("Rename failed.");
+      return;
+    }
+
+    const existing = conversations.find((item) => item.id === id && item.user_id === user.id);
+    if (!existing) {
+      setErr("You can only rename your own chats.");
+      showToast("Rename failed.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("conversations")
+      .update({ title: name })
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (!error) {
+      const { data } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      setConversations(data || []);
+      showToast("Renamed!");
+    } else {
+      setErr(`Rename failed: ${error.message}`);
+      showToast("Rename failed.");
+    }
+  }
+
+  async function actuallyDeleteConversation(id: string) {
+    setConfirmDeleteId(null);
+    setActionMenuId(null);
+    setIsRenameModal(false);
+    setRenameTargetId(null);
+    setErr(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setErr("Not logged in!");
+      showToast("Not logged in.");
+      return;
+    }
+
+    const existing = conversations.find((item) => item.id === id && item.user_id === user.id);
+    if (!existing) {
+      setErr("You can only delete your own chats.");
+      showToast("Delete failed.");
+      return;
+    }
+
+    await supabase.from("messages").delete().eq("conversation_id", id);
+    const { error } = await supabase.from("conversations").delete().eq("id", id).eq("user_id", user.id);
+
+    if (!error) {
+      const { data } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setConversations(data || []);
+      if (activeId === id) {
+        setActiveId(undefined);
+        setMessages([]);
+      }
+      showToast("Chat deleted.");
+    } else {
+      setErr(`Delete failed: ${error.message}`);
+      showToast("Delete failed.");
+    }
+  }
+
+  async function realAddConversation(name: string) {
+    setErr(null);
+    setShowNewChatModal(false);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setErr("Not logged in!");
+      showToast("Not logged in.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("conversations")
+      .insert([{ user_id: user.id, title: name || "Untitled" }])
+      .select("*")
+      .single();
+
+    if (error) {
+      setErr(error.message);
+      showToast("Failed to create chat.");
+      return;
+    }
+
+    setConversations((current) => [{ ...data }, ...current]);
+    setActiveId(data.id);
+    setMessages([]);
+    setIsSidebarOpen(false);
+    setNewChatName("");
+    showToast("New chat created.");
+  }
+
+  function renderConversationRow(conversation: Conversation) {
+    const displayName = conversation.title?.trim() ? conversation.title : "Untitled";
+    const isActive = activeId === conversation.id;
+
+    function handleTouchStart() {
+      if (holdTimer.current) clearTimeout(holdTimer.current);
+      holdTimer.current = setTimeout(() => setActionMenuId(conversation.id), 500);
+    }
+
+    function clearTouchTimer() {
+      if (holdTimer.current) clearTimeout(holdTimer.current);
+    }
+
+    return (
+      <div
+        key={conversation.id}
+        className={`planner-conversation${isActive ? " is-active" : ""}`}
+        onClick={() => {
+          setActiveId(conversation.id);
+          setErr(null);
+          setIsSidebarOpen(false);
+        }}
+        onTouchStart={isTouchDevice() ? handleTouchStart : undefined}
+        onTouchEnd={isTouchDevice() ? clearTouchTimer : undefined}
+        onTouchMove={isTouchDevice() ? clearTouchTimer : undefined}
+      >
+        <span className="planner-conversation-label" title={displayName}>{displayName}</span>
+        <button
+          type="button"
+          className="planner-conversation-more"
+          onClick={(e) => {
+            e.stopPropagation();
+            setActionMenuId(conversation.id);
+          }}
+        >
+          ⋮
+        </button>
+      </div>
+    );
+  }
+
   const profileHighlights = buildPlayerProfileHighlights(playerProfile);
   const hasProfileContext = hasPlayerProfile(playerProfile);
-  const activeConversation = conversations.find((conversation) => conversation.id === activeId);
+  const activeConversation = conversations.find((item) => item.id === activeId);
 
   return (
     <Protected>
       <Toaster message={toasterMsg} show={toasterShow} onHide={() => setToasterShow(false)} />
-      {actionMenuId && renderActionMenu()}
-      {isRenameModal && renderRenameModal()}
-      {renderDeleteConfirmModal()}
-      {renderNewChatModal()}
-      <SidebarOverlay />
-      <div className="app-shell plan-page-shell" style={{ background: "linear-gradient(135deg, #181f2f 80%, #232f44 100%)", minHeight: "var(--plan-vvh, 100dvh)" }}>
-        <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isMenuOpen={isSidebarOpen} />
-        <div className="page-frame plan-shell" style={{
-          display: "flex", alignItems: "stretch",
-          height: "calc(var(--plan-vvh, 100dvh) - 72px)", maxWidth: 1240, margin: "0 auto", width: "100%", position: "relative", minHeight: 0
-        }}>
-          <aside className={`app-sidebar plan-sidebar ${isSidebarOpen ? "open" : ""}`} style={{
-            flex: "0 0 240px", maxWidth: 340, minWidth: 240,
-            background: "rgba(17,23,38,0.993)", borderRadius: "14px 0 0 14px",
-            boxShadow: "0 4px 29px rgba(26,189,155,0.07)",
-            padding: "19px 12px 8px 17px", borderRight: "1.4px solid var(--border)",
-            overflowY: "auto", display: "flex", flexDirection: "column", gap: 0, transition: "transform 0.3s ease"
-          }}>
-            <div className="plan-sidebar-header" style={{
-              marginBottom: 20, display: "flex", alignItems: "center", gap: 9, justifyContent: "space-between"
-            }}>
+
+      {isSidebarOpen && <div className="planner-overlay" onClick={() => setIsSidebarOpen(false)} />}
+
+      {showNewChatModal && (
+        <>
+          <div className="planner-modal-backdrop" onClick={() => { setShowNewChatModal(false); setNewChatName(""); }} />
+          <div className="planner-modal">
+            <div className="planner-modal-title">Name your chat</div>
+            <input
+              autoFocus
+              className="planner-modal-input"
+              value={newChatName}
+              onChange={(e) => setNewChatName(e.target.value)}
+              placeholder="e.g. Shooting drills for 3-point improvement"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") realAddConversation(newChatName.trim());
+              }}
+            />
+            <div className="planner-modal-actions">
+              <button type="button" onClick={() => realAddConversation(newChatName.trim())}>Create</button>
+              <button type="button" className="is-secondary" onClick={() => { setShowNewChatModal(false); setNewChatName(""); }}>Cancel</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {actionMenuId && (
+        <>
+          <div className="planner-modal-backdrop" onClick={() => setActionMenuId(null)} />
+          <div className="planner-modal planner-action-modal">
+            <div className="planner-modal-title">
+              {conversations.find((item) => item.id === actionMenuId)?.title || "Conversation"}
+            </div>
+            <button
+              type="button"
+              className="planner-action-button"
+              onClick={() => {
+                const conversation = conversations.find((item) => item.id === actionMenuId);
+                if (!conversation) return;
+                setRenameTargetId(conversation.id);
+                setRenameValue(conversation.title?.trim() || "Untitled");
+                setIsRenameModal(true);
+                setActionMenuId(null);
+              }}
+            >
+              Rename conversation
+            </button>
+            <button
+              type="button"
+              className="planner-action-button is-danger"
+              onClick={() => {
+                setConfirmDeleteId(actionMenuId);
+                setActionMenuId(null);
+              }}
+            >
+              Delete
+            </button>
+            <button type="button" className="planner-action-link" onClick={() => setActionMenuId(null)}>
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+
+      {isRenameModal && (
+        <>
+          <div className="planner-modal-backdrop" onClick={() => { setIsRenameModal(false); setRenameTargetId(null); }} />
+          <div className="planner-modal">
+            <div className="planner-modal-title">Rename conversation</div>
+            <input
+              autoFocus
+              className="planner-modal-input"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              placeholder="New conversation name"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && renameTargetId) doRename(renameTargetId, renameValue);
+              }}
+            />
+            <div className="planner-modal-actions">
+              <button type="button" onClick={() => renameTargetId && doRename(renameTargetId, renameValue)}>Rename</button>
+              <button type="button" className="is-secondary" onClick={() => { setIsRenameModal(false); setRenameTargetId(null); }}>Cancel</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {confirmDeleteId && (
+        <>
+          <div className="planner-modal-backdrop" onClick={() => setConfirmDeleteId(null)} />
+          <div className="planner-modal">
+            <div className="planner-modal-title">Delete chat?</div>
+            <div className="planner-modal-copy">
+              Are you sure you want to delete <strong>{conversations.find((item) => item.id === confirmDeleteId)?.title || "this chat"}</strong>? This cannot be undone.
+            </div>
+            <div className="planner-modal-actions">
+              <button type="button" className="is-danger" onClick={() => actuallyDeleteConversation(confirmDeleteId)}>Delete</button>
+              <button type="button" className="is-secondary" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <div className="planner-shell" style={{ minHeight: "var(--planner-vvh, 100dvh)" }}>
+        <Navbar
+          onMenuClick={() => setIsSidebarOpen((current) => !current)}
+          isMenuOpen={isSidebarOpen}
+          onNewChatClick={() => startNewChatDraft()}
+        />
+
+        <div className="planner-frame" style={{ minHeight: 0 }}>
+          <aside className={`planner-sidebar${isSidebarOpen ? " is-open" : ""}`}>
+            <div className="planner-sidebar-head">
               <div>
-                <span className="plan-sidebar-title" style={{
-                  fontWeight: 900, fontSize: 21, color: 'var(--accent-2)',
-                  letterSpacing: '.06em', marginLeft: 2
-                }}>Recents</span>
-                <div className="plan-sidebar-count">
+                <div className="planner-sidebar-kicker">Workspace</div>
+                <div className="planner-sidebar-title">Recent chats</div>
+                <div className="planner-sidebar-count">
                   {loadingConvs ? "Loading chats..." : `${conversations.length} conversation${conversations.length === 1 ? "" : "s"}`}
                 </div>
               </div>
-              <button
-                onClick={() => startNewChatDraft()}
-                title="Create a new chat"
-                className="plan-primary-button"
-                style={{
-                  background: "linear-gradient(126deg, var(--accent-2), #328ec8 85%)",
-                  color: "#0f1524", fontWeight: 800, fontSize: 13.5,
-                  borderRadius: 16, border: 'none', padding: "6px 14px",
-                  cursor: "pointer", boxShadow: "0 2px 7px rgba(77,211,201,0.15)",
-                  display: "flex", alignItems: "center", gap: 4, transition: "filter 0.15s"
-                }}>
-                  <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> New
+              <button type="button" className="planner-new-button" onClick={() => startNewChatDraft()}>
+                <span>+</span>
+                New
               </button>
             </div>
-            <div className="plan-profile-card" style={{
-              marginBottom: 16,
-              padding: "14px 14px 13px",
-              borderRadius: 16,
-              background: "linear-gradient(160deg, rgba(77,211,201,0.12), rgba(60,123,224,0.08))",
-              border: "1px solid rgba(77,211,201,0.22)",
-              boxShadow: "0 10px 24px rgba(0,0,0,0.16)"
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+
+            <div className="planner-profile-card">
+              <div className="planner-profile-row">
                 <div>
-                  <div style={{ fontSize: 11.5, letterSpacing: "0.08em", fontWeight: 800, color: "var(--accent-2)" }}>
-                    PLAYER PROFILE
-                  </div>
-                  <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 4 }}>AI context</div>
+                  <div className="planner-profile-kicker">Player profile</div>
+                  <div className="planner-profile-title">AI context</div>
                 </div>
-                <Link href="/account" style={{ width: "auto", fontSize: 12.5, fontWeight: 800, color: "var(--accent-2)" }}>
-                  Edit
-                </Link>
+                <Link href="/account" className="planner-mini-link">Edit</Link>
               </div>
-              <div className="plan-profile-status">
+
+              <div className="planner-profile-state">
                 {hasProfileContext ? "Profile connected" : "Profile incomplete"}
               </div>
+
               {profileHighlights.length > 0 ? (
-                <div className="plan-profile-grid" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                <div className="planner-profile-tags">
                   {profileHighlights.map((item) => (
-                    <span
-                      key={item}
-                      className="plan-profile-chip"
-                      style={{
-                        display: "inline-flex",
-                        width: "auto",
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        background: "rgba(9,15,25,0.34)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#d9f7f3",
-                        fontSize: 12.3,
-                        fontWeight: 700,
-                      }}
-                    >
-                      {item}
-                    </span>
+                    <span key={item}>{item}</span>
                   ))}
                 </div>
               ) : (
-                <div className="helper" style={{ marginTop: 10, lineHeight: 1.5 }}>
+                <div className="planner-profile-copy">
                   Add your player profile so the AI can tailor workouts to the athlete.
                 </div>
               )}
             </div>
-            {loadingConvs && <div style={{ color: "var(--muted)", marginLeft: 2 }}>Loading…</div>}
-            <div className="plan-conversation-list" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {conversations.map(c => renderConversationRow(c))}
+
+            {loadingConvs && <div className="planner-side-note">Loading...</div>}
+
+            <div className="planner-conversation-list">
+              {conversations.map((conversation) => renderConversationRow(conversation))}
             </div>
+
             {!loadingConvs && conversations.length === 0 && (
-              <div className="plan-empty-state" style={{
-                color: "var(--muted)", fontWeight: 500, padding: "20px 4px 8px", textAlign: "center", fontSize: 14.2
-              }}>No chat history yet. Start a new chat and build your first training thread.</div>
+              <div className="planner-empty-side">
+                No chat history yet. Start a new chat and build your first training thread.
+              </div>
             )}
           </aside>
-          {/* === CHAT PANEL === */}
-          <section className="plan-chat-panel" style={{
-            flex: 1,
-            background: "linear-gradient(128deg,#191f2b 50%,#222b38 98%)",
-            borderRadius: "0 14px 14px 0",
-            boxShadow: "0 8px 48px rgba(93,230,170,0.08), 0 1px 10px rgba(60,123,224,0.045)",
-            display: "flex", flexDirection: "column", position: "relative", minWidth: 0,
-            height: "100%", overflow: "hidden", minHeight: 0
-          }}>
-            {/* CHAT */}
-            <div className="plan-chat-header">
-              <div className="plan-chat-heading">
-                <div className="section-kicker">AI TRAINING COACH</div>
-                <strong>{activeConversation?.title || "New training chat"}</strong>
-                <p>
-                  Start fresh with a cleaner prompt. Add your goal, time, equipment, and level for sharper basketball plans.
-                </p>
+
+          <section className="planner-chat">
+            <div className="planner-chat-head">
+              <div className="planner-chat-title-block">
+                <div className="planner-chat-kicker">AI TRAINING COACH</div>
+                <h1>{activeConversation?.title || "New training chat"}</h1>
+                <p>Start with a clear goal, time, equipment, and level for sharper basketball plans.</p>
               </div>
-              <div className="plan-chat-meta">
-                <div className="plan-chat-status">
+              <div className="planner-chat-badges">
+                <div className="planner-badge planner-badge-live">
                   <span />
                   {hasProfileContext ? "Profile-aware" : "Ready"}
                 </div>
-                <div className="plan-chat-pill">
-                  {activeId ? `${messages.length} messages` : "New chat"}
-                </div>
+                <div className="planner-badge">{activeId ? `${messages.length} messages` : "New chat"}</div>
               </div>
             </div>
-            <div ref={scrollRef} className="plan-scroll" style={{
-              flex: "1 1 0", overflowY: "auto", WebkitOverflowScrolling: "touch",
-              display: "flex", flexDirection: "column", minHeight: 0
-            }}>
-              <div className="plan-message-wrap" style={{
-                maxWidth: 750, margin: "0 auto", display: "flex", flexDirection: "column",
-                gap: 13, padding: "7px 16px", width: "100%"
-              }}>
+
+            <div ref={scrollRef} className="planner-scroll">
+              <div className="planner-messages">
                 {(!activeId || (!loadingMsgs && messages.length === 0)) && (
-                  <div className="plan-start-empty" style={{
-                    color: "var(--muted)", padding: 24, textAlign: "center", fontSize: 16
-                  }}>
-                    <div className="plan-empty-orb">AI</div>
+                  <div className="planner-empty-main">
+                    <div className="planner-empty-logo">AI</div>
                     <h2>Start a new basketball training chat.</h2>
-                    <p>
-                      Choose a suggestion below or write your own prompt. Keep it simple and specific for the best result.
-                    </p>
-                    <div className="plan-suggestion-note">
+                    <p>Choose a suggestion below or write your own prompt. Keep it simple, specific, and basketball-focused.</p>
+                    <div className="planner-suggestion-box">
                       Try including: position, main goal, number of training days, available equipment, and recovery limits.
                     </div>
-                    <div className="quick-prompt-grid">
+                    <div className="planner-suggestion-grid">
                       {QUICK_PROMPTS.map((prompt) => (
                         <button key={prompt} type="button" onClick={() => handleQuickPrompt(prompt)}>
                           {prompt}
@@ -892,156 +831,1003 @@ export default function PlanPage() {
                     </div>
                   </div>
                 )}
-                {loadingMsgs && <div style={{ color: "var(--muted)", fontWeight: 700 }}>Loading…</div>}
-                {messages.map(msg =>
-                  <div key={msg.id} style={{
-                    display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start"
-                  }}>
-                    <div className={`plan-bubble ${msg.role === "user" ? "plan-bubble-user" : "plan-bubble-ai"}`} style={{
-                      maxWidth: "85vw", minWidth: 88,
-                      borderRadius: msg.role === "user" ? "12px 12px 3px 14px" : "11px 12px 13px 3px",
-                      boxShadow: msg.role === "user"
-                        ? "0 2px 9px rgba(48,182,140,0.09)"
-                        : "0 2px 8px rgba(60,123,224,0.06)",
-                      background: msg.role === "user"
-                        ? "linear-gradient(122deg,#2aefd2 80%, #245e74 160%)"
-                        : "linear-gradient(124deg,#212b3d 70%,#194b68 105%)",
-                      color: "#eff9fb",
-                      padding: "12px 13px 10px 14px",
-                      marginLeft: msg.role === "user" ? "auto" : undefined,
-                      marginRight: msg.role === "ai" ? "auto" : undefined,
-                      fontSize: 14.8, fontWeight: 500, lineHeight: 1.59, letterSpacing: ".01em",
-                      transition: "background 0.13s"
-                    }}>
-                      <div className="plan-bubble-meta" style={{
-                        display: "flex", alignItems: "center", gap: 7, marginBottom: 3,
-                        color: msg.role === "user" ? "#011a19" : "var(--accent-2)",
-                        fontWeight: 700, fontSize: 12
-                      }}>
-                        <span>{msg.role === "user" ? "You" : "AI"}</span>
-                        <span style={{
-                          color: "#89b1ba", fontWeight: 500, fontSize: 11.4, marginLeft: 5
-                        }}>{msg.created_at ? new Date(msg.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+
+                {loadingMsgs && <div className="planner-status-pill">Loading...</div>}
+
+                {messages.map((message) => (
+                  <div key={message.id} className={`planner-message ${message.role === "user" ? "is-user" : "is-ai"}`}>
+                    <div className={`planner-bubble ${message.role === "user" ? "is-user" : "is-ai"}`}>
+                      <div className="planner-bubble-top">
+                        <span>{message.role === "user" ? "You" : "AI"}</span>
+                        <span>{message.created_at ? new Date(message.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                       </div>
-                      {msg.role === "ai" ? (
-                        <div style={{ fontSize: 14.8, wordBreak: "break-word" }}>
-                          <ReactMarkdown components={markdownComponents}>
-                            {msg.content}
-                          </ReactMarkdown>
+
+                      {message.role === "ai" ? (
+                        <div className="planner-bubble-body">
+                          <ReactMarkdown components={markdownComponents}>{message.content}</ReactMarkdown>
                           <button
                             type="button"
-                            onClick={() => saveTrainingPlan(msg)}
-                            disabled={savingPlanId === msg.id}
-                            style={{
-                              width: "auto",
-                              marginTop: 10,
-                              padding: "8px 11px",
-                              borderRadius: 999,
-                              background: "rgba(77,211,201,0.12)",
-                              color: "var(--accent-2)",
-                              border: "1px solid rgba(77,211,201,0.24)",
-                              boxShadow: "none",
-                              fontSize: 12.5,
-                              fontWeight: 900,
-                            }}
+                            className="planner-save-button"
+                            onClick={() => saveTrainingPlan(message)}
+                            disabled={savingPlanId === message.id}
                           >
-                            {savingPlanId === msg.id ? "Saving..." : "Save as training plan"}
+                            {savingPlanId === message.id ? "Saving..." : "Save as training plan"}
                           </button>
                         </div>
                       ) : (
-                        <div
-                          style={{
-                            fontSize: 14.8,
-                            fontFamily: "inherit",
-                            display: "inline-block",
-                            wordBreak: "break-word",
-                            whiteSpace: "pre-wrap",
-                          }}
-                        >
-                          {msg.content}
-                        </div>
+                        <div className="planner-bubble-body planner-bubble-user-text">{message.content}</div>
                       )}
                     </div>
                   </div>
-                )}
-                {sending &&
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <div style={{
-                      background: "rgba(77,211,201,0.12)",
-                      border: "1px solid rgba(77,211,201,0.28)",
-                      color: "var(--accent-2)", fontWeight: 800, fontSize: 13,
-                      padding: "9px 14px", borderRadius: 999,
-                      minWidth: 60,
-                    }}>AI is formulating…</div>
-                  </div>}
-                {err && <div style={{ color: "var(--error)", fontWeight: 650, fontSize: 14, padding: 7 }}>{err}</div>}
+                ))}
+
+                {sending && <div className="planner-status-pill">AI is formulating...</div>}
+                {err && <div className="planner-error-box">{err}</div>}
               </div>
             </div>
-            <div className="plan-input-shell" style={{ padding: "0 14px 12px 14px" }}>
-              <form className="plan-composer" onSubmit={handleSend} style={{
-                maxWidth: 750, margin: "0 auto", padding: "10px 11px", borderRadius: 14,
-                border: "1.3px solid var(--border)", background: "rgba(16,22,37,0.97)",
-                display: "flex", alignItems: "flex-end", gap: 10,
-                boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
-              }}>
+
+            <div className="planner-composer-wrap">
+              <form className="planner-composer" onSubmit={handleSend}>
                 <textarea
                   ref={inputRef}
                   value={input}
-                  onChange={e => setInput(e.target.value)}
+                  onChange={(e) => setInput(e.target.value)}
                   placeholder="Describe the athlete, goal, equipment, schedule, and any limits..."
-                  style={{ flex: "1 1 auto", padding: "9px 4px", minHeight: 28, maxHeight: 110,
-                    border: "none", background: "transparent", color: "#ecf8fb", fontSize: 15.4,
-                    fontWeight: 500, boxShadow: "none", resize: "none", lineHeight: 1.52, fontFamily: "inherit",
-                    outline: "none"
-                  }}
-                  disabled={sending} rows={1} required
-                  onKeyDown={e => {
+                  className="planner-composer-input"
+                  disabled={sending}
+                  rows={1}
+                  required
+                  onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey && !sending) {
-                      e.preventDefault(); handleSend();
+                      e.preventDefault();
+                      handleSend();
                     }
                   }}
                 />
-                <button type="submit" disabled={sending || !input.trim()} style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flex: "0 0 32px", height: 32, borderRadius: "50%",
-                  background: "linear-gradient(137deg,#13bfa5,#4fc9bd 120%)",
-                  color: "#022923", border: "none", boxShadow: "0 2px 7px rgba(34,208,189,0.13)",
-                  cursor: sending ? "not-allowed" : "pointer", marginBottom: 2
-                }} aria-label={sending ? "Generating plan" : "Send message"}>
-                  <svg width="14" height="14" fill="none" viewBox="0 0 20 20"><path
-                    d="M4 10h7M10.7 4.3l4.3 4.2c.4.4.4 1 0 1.4l-4.3 4.2"
-                    stroke="#08514a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <button type="submit" className="planner-send" disabled={sending || !input.trim()} aria-label="Send message">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 20 20">
+                    <path
+                      d="M4 10h7M10.7 4.3l4.3 4.2c.4.4.4 1 0 1.4l-4.3 4.2"
+                      stroke="#07131f"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </button>
               </form>
-              <div className="plan-composer-footer">
-                <span>
-                  {hasProfileContext
-                    ? "Profile context is active. The AI can tailor output more precisely."
-                    : "Add a player profile in Account to get more personalized training plans."}
-                </span>
+              <div className="planner-composer-meta">
+                <span>{hasProfileContext ? "Profile context is active. The AI can tailor output more precisely." : "Add a player profile in Account to get more personalized training plans."}</span>
                 <span>Press `Enter` to send.</span>
               </div>
             </div>
           </section>
         </div>
-        <style>{`
-        @media (max-width: 880px) {
-          .mobile-menu-btn { display: flex !important; }
-          .app-sidebar {
-            position: fixed;
-            left: 8px; top: 66px; height: calc(100svh - 74px); z-index: 50;
-            transform: translateX(-100%);
-            border-radius: 18px !important;
-          }
-          .app-sidebar.open { transform: translateX(0); }
-        }
-        @media (max-width:610px) {
-          .plan-chat-panel { border-radius: 18px !important; }
-          .plan-topbar { padding: 8px 10px !important; min-height: 52px !important; }
-          .plan-shell { height: calc(100svh - 66px) !important; min-height: 0 !important; width: calc(100vw - 16px) !important; }
-        }
-        `}</style>
       </div>
+
+      <style>{`
+        .planner-shell {
+          background:
+            radial-gradient(circle at 82% 14%, rgba(77,211,201,0.08), transparent 24%),
+            radial-gradient(circle at 14% 86%, rgba(90,160,255,0.08), transparent 26%),
+            linear-gradient(180deg, #0b101b 0%, #0f1523 52%, #0a0f19 100%);
+          display: grid;
+          grid-template-rows: auto 1fr;
+          overflow: hidden;
+        }
+
+        .planner-topbar {
+          width: min(1280px, calc(100vw - 28px));
+          margin: 10px auto 12px;
+          min-height: 62px;
+          padding: 10px 14px;
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(17,24,38,0.82);
+          box-shadow: 0 18px 44px rgba(0,0,0,0.24);
+          backdrop-filter: blur(14px);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          position: sticky;
+          top: 10px;
+          z-index: 60;
+        }
+
+        .planner-topbar-left,
+        .planner-topbar-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .planner-quick-add {
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          padding: 0;
+          border-radius: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(77,211,201,0.08);
+          border: 1px solid rgba(77,211,201,0.18);
+          box-shadow: none;
+          color: var(--accent-2);
+          font-size: 24px;
+          font-weight: 500;
+          line-height: 1;
+        }
+
+        .planner-quick-add:hover:not(:disabled) {
+          background: rgba(77,211,201,0.14);
+          transform: none;
+        }
+
+        .planner-menu-button {
+          display: none;
+          width: 44px;
+          height: 44px;
+          padding: 0;
+          border-radius: 14px;
+          border: 1px solid rgba(77,211,201,0.18);
+          background: rgba(77,211,201,0.08);
+          box-shadow: none;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .planner-menu-button span {
+          width: 16px;
+          height: 2px;
+          border-radius: 999px;
+          background: var(--accent-2);
+          transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+
+        .planner-menu-button.is-open span:nth-child(1) {
+          transform: translateY(6px) rotate(45deg);
+        }
+
+        .planner-menu-button.is-open span:nth-child(2) {
+          opacity: 0;
+        }
+
+        .planner-menu-button.is-open span:nth-child(3) {
+          transform: translateY(-6px) rotate(-45deg);
+        }
+
+        .planner-dashboard-link {
+          width: auto;
+          padding: 10px 16px;
+          border-radius: 999px;
+          border: 1px solid rgba(77,211,201,0.22);
+          background: rgba(77,211,201,0.08);
+          color: var(--accent-2);
+          font-size: 13px;
+          font-weight: 900;
+          text-decoration: none;
+        }
+
+        .planner-dashboard-link:hover {
+          text-decoration: none;
+          background: rgba(77,211,201,0.14);
+        }
+
+        .planner-frame {
+          width: min(1280px, calc(100vw - 28px));
+          margin: 0 auto 12px;
+          display: grid;
+          grid-template-columns: 320px minmax(0, 1fr);
+          gap: 12px;
+          height: calc(var(--planner-vvh, 100dvh) - 84px);
+          min-height: 0;
+        }
+
+        .planner-sidebar,
+        .planner-chat {
+          min-height: 0;
+          border-radius: 24px;
+          border: 1px solid rgba(255,255,255,0.07);
+          background: rgba(12,18,31,0.92);
+          box-shadow: 0 18px 54px rgba(0,0,0,0.24);
+          backdrop-filter: blur(12px);
+        }
+
+        .planner-sidebar {
+          overflow-y: auto;
+          padding: 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .planner-sidebar-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .planner-sidebar-kicker,
+        .planner-profile-kicker,
+        .planner-chat-kicker {
+          color: var(--accent-2);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+        }
+
+        .planner-sidebar-title,
+        .planner-profile-title {
+          margin-top: 5px;
+          color: var(--text);
+          font-size: 1.2rem;
+          font-weight: 900;
+          line-height: 1.15;
+        }
+
+        .planner-sidebar-count,
+        .planner-side-note,
+        .planner-profile-copy,
+        .planner-empty-side {
+          color: var(--muted);
+          font-size: 12.8px;
+          line-height: 1.55;
+        }
+
+        .planner-new-button {
+          width: auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, var(--accent-2), var(--accent));
+          color: #07131f;
+          font-size: 13px;
+          font-weight: 900;
+          box-shadow: 0 14px 32px rgba(77,211,201,0.18);
+        }
+
+        .planner-new-button span {
+          font-size: 16px;
+          line-height: 1;
+        }
+
+        .planner-profile-card {
+          padding: 16px;
+          border-radius: 20px;
+          background:
+            linear-gradient(145deg, rgba(77,211,201,0.12), rgba(90,160,255,0.08)),
+            rgba(255,255,255,0.03);
+          border: 1px solid rgba(77,211,201,0.18);
+          display: grid;
+          gap: 12px;
+        }
+
+        .planner-profile-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: start;
+          gap: 12px;
+        }
+
+        .planner-mini-link {
+          width: auto;
+          color: var(--accent-2);
+          font-size: 12.5px;
+          font-weight: 800;
+        }
+
+        .planner-profile-state {
+          width: fit-content;
+          padding: 7px 10px;
+          border-radius: 999px;
+          background: rgba(8,13,22,0.34);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: var(--accent-2);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .planner-profile-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .planner-profile-tags span {
+          width: auto;
+          padding: 7px 10px;
+          border-radius: 999px;
+          background: rgba(9,15,25,0.34);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: #d9f7f3;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .planner-conversation-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .planner-conversation {
+          min-height: 54px;
+          padding: 12px;
+          border-radius: 16px;
+          border: 1px solid transparent;
+          background: rgba(255,255,255,0.025);
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          cursor: pointer;
+          transition: background 0.16s ease, border-color 0.16s ease;
+        }
+
+        .planner-conversation:hover {
+          background: rgba(255,255,255,0.05);
+          border-color: rgba(77,211,201,0.14);
+        }
+
+        .planner-conversation.is-active {
+          background:
+            linear-gradient(135deg, rgba(77,211,201,0.12), rgba(90,160,255,0.08)),
+            rgba(255,255,255,0.03);
+          border-color: rgba(77,211,201,0.3);
+        }
+
+        .planner-conversation-label {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          color: var(--text);
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .planner-conversation-more {
+          width: auto;
+          padding: 2px 6px;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          color: #7d8db0;
+          font-size: 18px;
+        }
+
+        .planner-empty-side {
+          padding: 10px 4px 4px;
+          text-align: center;
+        }
+
+        .planner-chat {
+          display: grid;
+          grid-template-rows: auto minmax(0, 1fr) auto;
+          overflow: hidden;
+        }
+
+        .planner-chat-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 14px;
+          min-height: 88px;
+          padding: 18px 22px;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.02);
+        }
+
+        .planner-chat-title-block {
+          display: grid;
+          gap: 4px;
+        }
+
+        .planner-chat-title-block h1 {
+          margin: 0;
+          color: var(--text);
+          font-size: clamp(1.15rem, 2vw, 1.5rem);
+          line-height: 1.15;
+        }
+
+        .planner-chat-title-block p {
+          margin: 0;
+          max-width: 560px;
+          color: var(--muted);
+          font-size: 13.5px;
+          line-height: 1.55;
+        }
+
+        .planner-chat-badges {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .planner-badge {
+          width: auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 11px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.04);
+          color: var(--text);
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .planner-badge-live {
+          color: #c9f8f3;
+        }
+
+        .planner-badge-live span {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: var(--accent-2);
+          box-shadow: 0 0 14px rgba(77,211,201,0.7);
+        }
+
+        .planner-scroll {
+          min-height: 0;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
+        }
+
+        .planner-messages {
+          width: min(860px, 100%);
+          margin: 0 auto;
+          padding: 22px 18px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .planner-empty-main {
+          min-height: 100%;
+          display: grid;
+          place-items: center;
+          align-content: center;
+          gap: 14px;
+          padding: 24px 8px;
+          text-align: center;
+        }
+
+        .planner-empty-logo {
+          width: 58px;
+          height: 58px;
+          border-radius: 18px;
+          display: grid;
+          place-items: center;
+          color: #071322;
+          font-size: 22px;
+          font-weight: 950;
+          background: linear-gradient(135deg, var(--accent-2), var(--accent));
+          box-shadow: 0 18px 38px rgba(77,211,201,0.18);
+        }
+
+        .planner-empty-main h2 {
+          margin: 0;
+          color: var(--text);
+          font-size: clamp(1.55rem, 4vw, 2.4rem);
+          line-height: 1.08;
+        }
+
+        .planner-empty-main p {
+          margin: 0;
+          max-width: 620px;
+          color: var(--muted);
+          font-size: 14px;
+          line-height: 1.65;
+        }
+
+        .planner-suggestion-box {
+          width: min(640px, 100%);
+          padding: 14px 16px;
+          border-radius: 18px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.07);
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .planner-suggestion-grid {
+          width: min(680px, 100%);
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .planner-suggestion-grid button {
+          min-height: 58px;
+          padding: 14px 16px;
+          border-radius: 18px;
+          text-align: left;
+          background: rgba(255,255,255,0.045);
+          border: 1px solid rgba(255,255,255,0.07);
+          box-shadow: none;
+          color: var(--text);
+          font-size: 14px;
+          font-weight: 800;
+          line-height: 1.35;
+        }
+
+        .planner-suggestion-grid button:hover:not(:disabled) {
+          background: rgba(255,255,255,0.065);
+          border-color: rgba(77,211,201,0.22);
+        }
+
+        .planner-message {
+          display: flex;
+        }
+
+        .planner-message.is-user {
+          justify-content: flex-end;
+        }
+
+        .planner-message.is-ai {
+          justify-content: flex-start;
+        }
+
+        .planner-bubble {
+          max-width: min(760px, 88%);
+          border-radius: 22px;
+          border: 1px solid rgba(255,255,255,0.07);
+          padding: 16px 16px 14px;
+          box-shadow: none;
+        }
+
+        .planner-bubble.is-ai {
+          background: rgba(255,255,255,0.045);
+          color: var(--text);
+        }
+
+        .planner-bubble.is-user {
+          background: linear-gradient(135deg, #6fe4dc, #5aa0ff);
+          color: #06131f;
+        }
+
+        .planner-bubble-top {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 6px;
+          font-size: 11.5px;
+          font-weight: 900;
+          text-transform: uppercase;
+          opacity: 0.82;
+        }
+
+        .planner-bubble-top span:last-child {
+          font-weight: 700;
+          opacity: 0.76;
+        }
+
+        .planner-bubble-body {
+          font-size: 14.8px;
+          line-height: 1.66;
+          word-break: break-word;
+        }
+
+        .planner-bubble-user-text {
+          white-space: pre-wrap;
+        }
+
+        .planner-save-button {
+          width: auto;
+          margin-top: 10px;
+          padding: 8px 11px;
+          border-radius: 999px;
+          background: rgba(77,211,201,0.12);
+          border: 1px solid rgba(77,211,201,0.24);
+          box-shadow: none;
+          color: var(--accent-2);
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .planner-status-pill {
+          width: fit-content;
+          margin: 0 auto;
+          padding: 10px 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(77,211,201,0.24);
+          background: rgba(77,211,201,0.1);
+          color: var(--accent-2);
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .planner-error-box {
+          padding: 12px 14px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,107,107,0.34);
+          background: rgba(255,107,107,0.1);
+          color: #ff9393;
+          font-size: 13.5px;
+          line-height: 1.5;
+        }
+
+        .planner-composer-wrap {
+          padding: 12px 16px 16px;
+          border-top: 1px solid rgba(255,255,255,0.06);
+          background: linear-gradient(180deg, rgba(10,15,26,0.12), rgba(10,15,26,0.95));
+        }
+
+        .planner-composer {
+          width: min(860px, 100%);
+          margin: 0 auto;
+          display: flex;
+          align-items: flex-end;
+          gap: 10px;
+          padding: 12px 14px;
+          border-radius: 22px;
+          border: 1px solid rgba(77,211,201,0.14);
+          background: rgba(11,17,28,0.98);
+          box-shadow: 0 14px 34px rgba(0,0,0,0.22);
+        }
+
+        .planner-composer-input {
+          flex: 1 1 auto;
+          min-height: 26px !important;
+          max-height: 180px !important;
+          padding: 4px 2px !important;
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          resize: none !important;
+          color: #ecf8fb !important;
+          font-size: 15px !important;
+          line-height: 1.45 !important;
+          overflow-y: auto;
+        }
+
+        .planner-composer-input:focus {
+          box-shadow: none !important;
+        }
+
+        .planner-send {
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 0;
+          background: linear-gradient(137deg,#13bfa5,#4fc9bd 120%);
+          color: #07131f;
+          box-shadow: none;
+        }
+
+        .planner-composer-meta {
+          width: min(860px, 100%);
+          margin: 10px auto 0;
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+          color: var(--muted);
+          font-size: 12px;
+          line-height: 1.5;
+        }
+
+        .planner-toast {
+          position: fixed;
+          left: 50%;
+          bottom: 28px;
+          transform: translateX(-50%);
+          z-index: 2000;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.24s ease;
+        }
+
+        .planner-toast.is-visible {
+          opacity: 1;
+        }
+
+        .planner-toast-pill {
+          background: linear-gradient(135deg,#19e6be,#33aadd 120%);
+          color: #00303a;
+          font-weight: 800;
+          font-size: 14px;
+          border-radius: 999px;
+          padding: 10px 18px;
+          box-shadow: 0 10px 32px rgba(32,253,213,0.24);
+          white-space: nowrap;
+        }
+
+        .planner-overlay,
+        .planner-modal-backdrop {
+          position: fixed;
+          inset: 0;
+        }
+
+        .planner-overlay {
+          z-index: 49;
+          background: rgba(8,13,22,0.34);
+        }
+
+        .planner-modal-backdrop {
+          z-index: 1001;
+          background: rgba(8,13,22,0.58);
+        }
+
+        .planner-modal {
+          position: fixed;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 1002;
+          width: min(360px, calc(100vw - 24px));
+          padding: 26px 22px 20px;
+          border-radius: 22px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: linear-gradient(180deg, rgba(24,33,52,0.98), rgba(14,20,33,0.98));
+          box-shadow: 0 20px 60px rgba(0,0,0,0.34);
+          display: grid;
+          gap: 14px;
+        }
+
+        .planner-action-modal {
+          gap: 10px;
+        }
+
+        .planner-modal-title {
+          color: var(--text);
+          font-size: 18px;
+          font-weight: 900;
+          text-align: center;
+        }
+
+        .planner-modal-copy {
+          color: var(--muted);
+          font-size: 14px;
+          line-height: 1.6;
+          text-align: center;
+        }
+
+        .planner-modal-input {
+          width: 100%;
+        }
+
+        .planner-modal-actions {
+          display: flex;
+          gap: 10px;
+        }
+
+        .planner-modal-actions button,
+        .planner-action-button {
+          flex: 1 1 0;
+        }
+
+        .planner-modal-actions .is-secondary,
+        .planner-action-link {
+          background: rgba(255,255,255,0.05) !important;
+          border: 1px solid rgba(255,255,255,0.08) !important;
+          color: var(--text) !important;
+          box-shadow: none !important;
+        }
+
+        .planner-modal-actions .is-danger,
+        .planner-action-button.is-danger {
+          background: linear-gradient(135deg, #ff536e, #ff9068) !important;
+          color: #fff !important;
+        }
+
+        .planner-action-button {
+          width: 100%;
+        }
+
+        .planner-action-link {
+          font-size: 14px;
+        }
+
+        @media (max-width: 980px) {
+          .planner-frame {
+            grid-template-columns: 280px minmax(0, 1fr);
+          }
+        }
+
+        @media (max-width: 880px) {
+          .planner-menu-button {
+            display: inline-flex;
+          }
+
+          .planner-frame {
+            grid-template-columns: minmax(0, 1fr);
+          }
+
+          .planner-sidebar {
+            position: fixed;
+            left: 8px;
+            top: 74px;
+            width: min(86vw, 320px);
+            height: calc(var(--planner-vvh, 100dvh) - 84px);
+            z-index: 50;
+            transform: translateX(-104%);
+            transition: transform 0.24s ease;
+          }
+
+          .planner-sidebar.is-open {
+            transform: translateX(0);
+          }
+        }
+
+        @media (max-width: 700px) {
+          html:has(.planner-shell),
+          body:has(.planner-shell) {
+            height: 100%;
+            overflow: hidden;
+          }
+
+          .planner-shell {
+            height: var(--planner-vvh, 100dvh);
+            min-height: var(--planner-vvh, 100dvh);
+            max-height: var(--planner-vvh, 100dvh);
+          }
+
+          .planner-topbar {
+            width: calc(100vw - 12px);
+            min-height: 52px;
+            margin: 6px auto 6px;
+            padding: 8px 10px;
+            border-radius: 16px;
+            top: 6px;
+          }
+
+          .planner-dashboard-link {
+            padding: 8px 12px;
+            font-size: 12px;
+          }
+
+          .planner-topbar-left {
+            gap: 8px;
+          }
+
+          .planner-quick-add {
+            width: 38px;
+            height: 38px;
+            flex-basis: 38px;
+            border-radius: 12px;
+            font-size: 22px;
+          }
+
+          .planner-frame {
+            width: calc(100vw - 12px);
+            height: calc(var(--planner-vvh, 100dvh) - 64px);
+            margin: 0 auto 6px;
+            gap: 0;
+          }
+
+          .planner-chat {
+            border-radius: 18px;
+          }
+
+          .planner-chat-head {
+            min-height: auto;
+            padding: 12px;
+            align-items: flex-start;
+            gap: 10px;
+          }
+
+          .planner-chat-title-block h1 {
+            font-size: 1rem;
+          }
+
+          .planner-chat-title-block p {
+            font-size: 12.5px;
+            line-height: 1.5;
+          }
+
+          .planner-chat-badges {
+            width: 100%;
+            justify-content: flex-start;
+            gap: 8px;
+          }
+
+          .planner-badge {
+            padding: 7px 9px;
+            font-size: 11px;
+          }
+
+          .planner-messages {
+            padding: 12px 8px 10px;
+            gap: 12px;
+          }
+
+          .planner-empty-main {
+            padding: 16px 2px 10px;
+            gap: 10px;
+          }
+
+          .planner-empty-main h2 {
+            font-size: clamp(1.24rem, 5vw, 1.7rem);
+          }
+
+          .planner-empty-main p,
+          .planner-suggestion-box {
+            font-size: 12.5px;
+          }
+
+          .planner-suggestion-grid {
+            grid-template-columns: 1fr;
+            gap: 8px;
+          }
+
+          .planner-suggestion-grid button {
+            min-height: 48px;
+            padding: 11px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+          }
+
+          .planner-bubble {
+            max-width: 96%;
+            padding: 12px;
+            border-radius: 18px;
+          }
+
+          .planner-bubble-body {
+            font-size: 14px;
+            line-height: 1.62;
+          }
+
+          .planner-composer-wrap {
+            position: sticky;
+            bottom: 0;
+            z-index: 30;
+            padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+            background: rgba(10,15,26,0.98);
+            backdrop-filter: blur(12px);
+          }
+
+          .planner-composer {
+            padding: 9px 10px;
+            border-radius: 16px;
+            min-height: 52px;
+          }
+
+          .planner-composer-input {
+            font-size: 15px !important;
+            line-height: 1.38 !important;
+            max-height: 132px !important;
+          }
+
+          .planner-send {
+            width: 38px;
+            height: 38px;
+            flex-basis: 38px;
+          }
+
+          .planner-composer-meta {
+            display: none;
+          }
+
+          .planner-sidebar {
+            top: 64px;
+            height: calc(var(--planner-vvh, 100dvh) - 72px);
+            border-radius: 18px;
+          }
+        }
+      `}</style>
     </Protected>
   );
 }
