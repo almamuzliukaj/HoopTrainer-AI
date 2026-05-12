@@ -746,7 +746,7 @@ export default function PlanPage() {
         </>
       )}
 
-      <div className="planner-shell" style={{ minHeight: "var(--planner-vvh, 100dvh)" }}>
+      <div className="planner-shell">
         <Navbar
           onMenuClick={() => setIsSidebarOpen((current) => !current)}
           isMenuOpen={isSidebarOpen}
@@ -918,12 +918,18 @@ export default function PlanPage() {
 
       <style>{`
         .planner-shell {
+          position: fixed;
+          inset: 0;
+          width: 100%;
+          height: 100dvh;
+          min-height: 100dvh;
+          max-height: 100dvh;
           background:
             radial-gradient(circle at 82% 14%, rgba(77,211,201,0.08), transparent 24%),
             radial-gradient(circle at 14% 86%, rgba(90,160,255,0.08), transparent 26%),
             linear-gradient(180deg, #0b101b 0%, #0f1523 52%, #0a0f19 100%);
-          display: grid;
-          grid-template-rows: auto 1fr;
+          display: flex;
+          flex-direction: column;
           overflow: hidden;
         }
 
@@ -941,8 +947,8 @@ export default function PlanPage() {
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          position: sticky;
-          top: 10px;
+          flex: 0 0 auto;
+          position: relative;
           z-index: 60;
         }
 
@@ -994,8 +1000,10 @@ export default function PlanPage() {
           display: grid;
           grid-template-columns: 320px minmax(0, 1fr);
           gap: 12px;
-          height: calc(var(--planner-vvh, 100dvh) - 84px);
+          flex: 1 1 auto;
+          height: auto;
           min-height: 0;
+          overflow: hidden;
         }
 
         .planner-sidebar,
@@ -1202,12 +1210,15 @@ export default function PlanPage() {
         }
 
         .planner-chat {
-          display: grid;
-          grid-template-rows: auto minmax(0, 1fr) auto;
+          display: flex;
+          flex-direction: column;
           overflow: hidden;
         }
 
         .planner-chat-head {
+          flex: 0 0 auto;
+          position: relative;
+          z-index: 2;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -1273,6 +1284,7 @@ export default function PlanPage() {
         }
 
         .planner-scroll {
+          flex: 1 1 auto;
           min-height: 0;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
@@ -1455,6 +1467,10 @@ export default function PlanPage() {
         }
 
         .planner-composer-wrap {
+          flex: 0 0 auto;
+          position: sticky;
+          bottom: 0;
+          z-index: 3;
           padding: 12px 16px 16px;
           border-top: 1px solid rgba(255,255,255,0.06);
           background: linear-gradient(180deg, rgba(10,15,26,0.12), rgba(10,15,26,0.95));
@@ -1746,6 +1762,7 @@ export default function PlanPage() {
             height: var(--planner-vvh, 100dvh);
             min-height: var(--planner-vvh, 100dvh);
             max-height: var(--planner-vvh, 100dvh);
+            overflow: hidden;
           }
 
           .planner-topbar {
@@ -1754,7 +1771,6 @@ export default function PlanPage() {
             margin: 6px auto 6px;
             padding: 8px 10px;
             border-radius: 16px;
-            top: 6px;
           }
 
           .planner-dashboard-link {
@@ -1776,9 +1792,12 @@ export default function PlanPage() {
 
           .planner-frame {
             width: calc(100vw - 12px);
-            height: calc(var(--planner-vvh, 100dvh) - 64px);
+            flex: 1 1 auto;
+            height: auto;
+            min-height: 0;
             margin: 0 auto 6px;
             gap: 0;
+            overflow: hidden;
           }
 
           .planner-chat {
@@ -1855,9 +1874,6 @@ export default function PlanPage() {
           }
 
           .planner-composer-wrap {
-            position: sticky;
-            bottom: 0;
-            z-index: 30;
             padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
             background: rgba(10,15,26,0.98);
             backdrop-filter: blur(12px);
