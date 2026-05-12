@@ -185,10 +185,14 @@ export default function PlanPage() {
 
   function settleMobileViewport() {
     inputRef.current?.blur();
-    window.setTimeout(() => {
+    const restoreViewport = () => {
+      document.documentElement.style.setProperty("--planner-vvh", `${window.innerHeight}px`);
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" });
-    }, 120);
+    };
+
+    window.setTimeout(restoreViewport, 80);
+    window.setTimeout(restoreViewport, 260);
   }
 
   useEffect(() => {
@@ -247,26 +251,28 @@ export default function PlanPage() {
     const root = document.documentElement;
     const viewport = window.visualViewport;
 
-    function syncViewportHeight() {
-      const nextHeight = viewport?.height ?? window.innerHeight;
+    function syncViewportHeight(useLayoutViewport = false) {
+      const nextHeight = useLayoutViewport ? window.innerHeight : viewport?.height ?? window.innerHeight;
       root.style.setProperty("--planner-vvh", `${nextHeight}px`);
     }
+    const syncVisualViewport = () => syncViewportHeight();
+    const syncLayoutViewport = () => syncViewportHeight(true);
 
-    syncViewportHeight();
+    syncViewportHeight(true);
 
     if (viewport) {
-      viewport.addEventListener("resize", syncViewportHeight);
-      viewport.addEventListener("scroll", syncViewportHeight);
+      viewport.addEventListener("resize", syncVisualViewport);
+      viewport.addEventListener("scroll", syncVisualViewport);
     } else {
-      window.addEventListener("resize", syncViewportHeight);
+      window.addEventListener("resize", syncLayoutViewport);
     }
 
     return () => {
       if (viewport) {
-        viewport.removeEventListener("resize", syncViewportHeight);
-        viewport.removeEventListener("scroll", syncViewportHeight);
+        viewport.removeEventListener("resize", syncVisualViewport);
+        viewport.removeEventListener("scroll", syncVisualViewport);
       } else {
-        window.removeEventListener("resize", syncViewportHeight);
+        window.removeEventListener("resize", syncLayoutViewport);
       }
       root.style.removeProperty("--planner-vvh");
     };
@@ -896,6 +902,8 @@ export default function PlanPage() {
                   disabled={sending}
                   rows={1}
                   required
+                  onBlur={settleMobileViewport}
+                  onFocus={() => window.scrollTo({ top: 0, left: 0, behavior: "auto" })}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey && !sending) {
                       e.preventDefault();
@@ -1508,7 +1516,7 @@ export default function PlanPage() {
           box-shadow: none !important;
           resize: none !important;
           color: #ecf8fb !important;
-          font-size: 15px !important;
+          font-size: 16px !important;
           line-height: 1.45 !important;
           overflow-y: auto;
         }
@@ -1768,9 +1776,9 @@ export default function PlanPage() {
           }
 
           .planner-shell {
-            height: 100dvh;
-            min-height: 100dvh;
-            max-height: 100dvh;
+            height: var(--planner-vvh, 100dvh);
+            min-height: var(--planner-vvh, 100dvh);
+            max-height: var(--planner-vvh, 100dvh);
             overflow: hidden;
           }
 
@@ -1895,7 +1903,7 @@ export default function PlanPage() {
           }
 
           .planner-composer-input {
-            font-size: 15px !important;
+            font-size: 16px !important;
             line-height: 1.38 !important;
             max-height: 132px !important;
           }

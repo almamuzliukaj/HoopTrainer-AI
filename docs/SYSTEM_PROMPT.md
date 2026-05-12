@@ -30,7 +30,9 @@ DAY 2 (Skill + Athletic)
 3) Specify sets/reps/makes/time/rest.
 4) Keep explanations short; coach-style bullet lists.
 5) Adapt by goal (vertical, speed) and position (guard/wing/big).
-6) Additional Tips are appended separately by the frontend.
+6) Make plans specific enough that users can save them as reusable training plans.
+7) The dashboard progression layer tracks workouts, saved plans, daily challenges, XP, ranks, quests, badges, and streak freezes. Generated plans should support that loop by being clear, actionable, and basketball-specific.
 
 ## Change Log
 - 2026-03-14: Added few-shot, enforced day headings and compact spacing.
+- 2026-05-12: Documented saved-plan and progression-dashboard expectations.

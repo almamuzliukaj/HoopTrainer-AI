@@ -10,6 +10,7 @@ import AddWorkoutForm from "@/components/AddWorkoutForm";
 import WorkoutListPro from "@/components/WorkoutListPro";
 import BrandMark from "@/components/BrandMark";
 import SiteFooter from "@/components/SiteFooter";
+import { normalizePlayerProfile, type PlayerProfile } from "@/lib/playerProfile";
 
 // === HELPER: Get user name/email from Supabase ===
 function useAuthUser() {
@@ -291,6 +292,13 @@ type SavedTrainingPlan = {
   created_at?: string;
 };
 
+type WorkoutSummary = {
+  id: string;
+  title: string;
+  description?: string;
+  created_at?: string;
+};
+
 const savedPlanMarkdownComponents = {
   h1: ({ children }: { children?: ReactNode }) => <h1 className="saved-plan-md-heading">{children}</h1>,
   h2: ({ children }: { children?: ReactNode }) => <h2 className="saved-plan-md-heading">{children}</h2>,
@@ -320,12 +328,13 @@ function getDailyChallenge() {
   return DAILY_CHALLENGES[dayNumber % DAILY_CHALLENGES.length];
 }
 
-function countCurrentStreak(completedDates: string[], todayKey: string) {
+function countCurrentStreak(completedDates: string[], todayKey: string, freezeDates: string[] = []) {
   const completed = new Set(completedDates);
+  const frozen = new Set(freezeDates);
   let streak = 0;
   const cursor = new Date(`${todayKey}T12:00:00`);
 
-  while (completed.has(cursor.toISOString().slice(0, 10))) {
+  while (completed.has(cursor.toISOString().slice(0, 10)) || frozen.has(cursor.toISOString().slice(0, 10))) {
     streak += 1;
     cursor.setDate(cursor.getDate() - 1);
   }
@@ -350,6 +359,124 @@ function getCurrentWeekDays(todayKey: string) {
   });
 }
 
+function getActivityDates(items: { created_at?: string }[], completedDates: string[]) {
+  return Array.from(new Set([
+    ...completedDates,
+    ...items
+      .map((item) => item.created_at?.slice(0, 10))
+      .filter(Boolean),
+  ] as string[])).sort();
+}
+
+function getIntensityLabel(workouts: WorkoutSummary[], savedPlans: SavedTrainingPlan[]) {
+  const text = [...workouts, ...savedPlans]
+    .map((item) => `${item.title} ${"content" in item ? item.content : item.description || ""}`)
+    .join(" ")
+    .toLowerCase();
+
+  if (/conditioning|sprint|shuttle|defense|plyo|jump|explosive|speed/.test(text)) return "Explosive";
+  if (/shoot|form|free throw|3-point|three|range|pull-up/.test(text)) return "Skill";
+  if (/handle|dribble|ball/.test(text)) return "Handle";
+  if (/mobility|recovery|stretch|warm/.test(text)) return "Recovery";
+  return "Balanced";
+}
+
+function getAdaptiveFocus(profile: PlayerProfile, workouts: WorkoutSummary[], savedPlans: SavedTrainingPlan[], currentStreak: number) {
+  const normalized = normalizePlayerProfile(profile);
+  const goal = normalized.primaryGoal || "overall basketball development";
+  const position = normalized.position || "player";
+  const days = Number.parseInt(normalized.daysPerWeek, 10);
+  const hasRecentWork = workouts.length > 0 || savedPlans.length > 0 || currentStreak > 0;
+
+  if (currentStreak >= 5) {
+    return {
+      title: "Deload with precision",
+      copy: `Keep the ${position} sharp with a lower-load ${goal} session and extra recovery detail.`,
+      blocks: ["Movement prep", "Low-volume skill reps", "Film or notes"],
+    };
+  }
+
+  if (Number.isFinite(days) && days <= 3) {
+    return {
+      title: "Compact high-value session",
+      copy: `Use a focused ${days}-day rhythm: one skill priority, one athletic block, one clean finisher.`,
+      blocks: ["Primary skill", "Game-speed burst", "Short finisher"],
+    };
+  }
+
+  if (!hasRecentWork) {
+    return {
+      title: "Build your baseline",
+      copy: `Start with a balanced ${goal} plan so the AI has a clearer training pattern to adapt from.`,
+      blocks: ["Skill assessment", "Controlled conditioning", "Recovery note"],
+    };
+  }
+
+  return {
+    title: "Progress the next session",
+    copy: `Advance ${goal} without overloading: repeat the strongest block and add one harder constraint.`,
+    blocks: ["Repeat best drill", "Add pressure", "Log one cue"],
+  };
+}
+
+function getPlayerLevel(totalXp: number) {
+  return Math.max(1, Math.floor(totalXp / 120) + 1);
+}
+
+function getPlayerRank(level: number) {
+  if (level >= 18) return "Franchise";
+  if (level >= 14) return "All-Star";
+  if (level >= 10) return "Captain";
+  if (level >= 6) return "Starter";
+  if (level >= 3) return "Rotation Player";
+  return "Rookie";
+}
+
+function getNextRank(level: number) {
+  if (level < 3) return "Rotation Player";
+  if (level < 6) return "Starter";
+  if (level < 10) return "Captain";
+  if (level < 14) return "All-Star";
+  if (level < 18) return "Franchise";
+  return "Max rank";
+}
+
+function getSkillBadges(workouts: WorkoutSummary[], savedPlans: SavedTrainingPlan[]) {
+  const text = [...workouts, ...savedPlans]
+    .map((item) => `${item.title} ${"content" in item ? item.content : item.description || ""}`)
+    .join(" ")
+    .toLowerCase();
+
+  const badges = [
+    { title: "Shooter", terms: ["shoot", "form", "free throw", "3-point", "range", "pull-up"] },
+    { title: "Ball Handler", terms: ["handle", "dribble", "crossover", "weak-hand", "ball"] },
+    { title: "Finisher", terms: ["finish", "layup", "rim", "floater", "drive"] },
+    { title: "Defender", terms: ["defense", "slide", "closeout", "stance"] },
+    { title: "Athlete", terms: ["jump", "sprint", "speed", "plyo", "explosive", "conditioning"] },
+    { title: "Recovery Pro", terms: ["mobility", "recovery", "stretch", "warm", "cooldown"] },
+  ];
+
+  return badges.map((badge) => ({
+    ...badge,
+    unlocked: badge.terms.some((term) => text.includes(term)),
+  }));
+}
+
+function getLevelRewards(level: number) {
+  return [
+    { title: "Smart warm-up templates", level: 2 },
+    { title: "Pressure shooting prompts", level: 4 },
+    { title: "Advanced weekly quests", level: 6 },
+    { title: "Captain challenge mode", level: 10 },
+  ].map((reward) => ({ ...reward, unlocked: level >= reward.level }));
+}
+
+function getPreviousDayKey(todayKey: string) {
+  const previous = new Date(`${todayKey}T12:00:00`);
+  previous.setDate(previous.getDate() - 1);
+  return previous.toISOString().slice(0, 10);
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [snippetIndex, setSnippetIndex] = useState(0);
@@ -361,7 +488,11 @@ export default function Dashboard() {
   const [dailyChallenge, setDailyChallenge] = useState(DAILY_CHALLENGES[0]);
   const [todayKey, setTodayKey] = useState("");
   const [completedChallengeDates, setCompletedChallengeDates] = useState<string[]>([]);
+  const [streakFreezeDates, setStreakFreezeDates] = useState<string[]>([]);
   const [challengeSaving, setChallengeSaving] = useState(false);
+  const [freezeSaving, setFreezeSaving] = useState(false);
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>({});
+  const [recentWorkouts, setRecentWorkouts] = useState<WorkoutSummary[]>([]);
 
   useEffect(() => {
     const id = setInterval(() => setSnippetIndex((p) => (p + 1) % SNIPPETS.length), 20000);
@@ -379,8 +510,12 @@ export default function Dashboard() {
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (cancelled) return;
-      const savedDates = user?.user_metadata?.dailyChallenge?.completedDates;
+      const dailyMeta = user?.user_metadata?.dailyChallenge;
+      const savedDates = dailyMeta?.completedDates;
+      const savedFreezeDates = dailyMeta?.freezeDates;
+      setPlayerProfile(normalizePlayerProfile(user?.user_metadata?.playerProfile));
       setCompletedChallengeDates(Array.isArray(savedDates) ? savedDates.filter(Boolean) : []);
+      setStreakFreezeDates(Array.isArray(savedFreezeDates) ? savedFreezeDates.filter(Boolean) : []);
     });
 
     return () => { cancelled = true; };
@@ -408,6 +543,25 @@ export default function Dashboard() {
     })();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setRecentWorkouts([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("workouts")
+        .select("id,title,description,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(6);
+
+      setRecentWorkouts(error ? [] : (data as WorkoutSummary[]) || []);
+    })();
+  }, [listRefresh]);
+
   const logout = async () => {
     await supabase.auth.signOut();
     router.replace("/login");
@@ -425,10 +579,51 @@ export default function Dashboard() {
   };
 
   const challengeCompletedToday = todayKey ? completedChallengeDates.includes(todayKey) : false;
-  const currentStreak = todayKey ? countCurrentStreak(completedChallengeDates, todayKey) : 0;
+  const previousDayKey = todayKey ? getPreviousDayKey(todayKey) : "";
+  const currentStreak = todayKey ? countCurrentStreak(completedChallengeDates, todayKey, streakFreezeDates) : 0;
   const weekDays = getCurrentWeekDays(todayKey);
   const completedThisWeek = weekDays.filter((day) => completedChallengeDates.includes(day.key)).length;
   const weeklyProgress = Math.round((completedThisWeek / weekDays.length) * 100);
+  const activityDates = getActivityDates([...recentWorkouts, ...savedPlans], completedChallengeDates);
+  const trainingDays = activityDates.length;
+  const challengeXp = completedChallengeDates.length * 40;
+  const workoutXp = recentWorkouts.length * 25;
+  const planXp = savedPlans.length * 35;
+  const streakBonusXp = Math.floor(currentStreak / 7) * 150;
+  const weeklyQuests = [
+    { title: "Complete 5 daily challenges", progress: completedThisWeek, target: 5, xp: 120 },
+    { title: "Log 3 workouts", progress: Math.min(recentWorkouts.length, 3), target: 3, xp: 90 },
+    { title: "Save 2 AI plans", progress: Math.min(savedPlans.length, 2), target: 2, xp: 80 },
+  ];
+  const questBonusXp = weeklyQuests
+    .filter((quest) => quest.progress >= quest.target)
+    .reduce((sum, quest) => sum + quest.xp, 0);
+  const totalXp = challengeXp + workoutXp + planXp + streakBonusXp + questBonusXp;
+  const playerLevel = getPlayerLevel(totalXp);
+  const playerRank = getPlayerRank(playerLevel);
+  const nextRank = getNextRank(playerLevel);
+  const nextLevelXp = playerLevel * 120;
+  const levelProgress = Math.min(100, Math.round((totalXp / nextLevelXp) * 100));
+  const intensityLabel = getIntensityLabel(recentWorkouts, savedPlans);
+  const adaptiveFocus = getAdaptiveFocus(playerProfile, recentWorkouts, savedPlans, currentStreak);
+  const earnedFreezes = Math.floor(completedChallengeDates.length / 5);
+  const availableFreezes = Math.max(0, earnedFreezes - streakFreezeDates.length);
+  const canUseFreeze = Boolean(
+    previousDayKey &&
+    availableFreezes > 0 &&
+    !completedChallengeDates.includes(previousDayKey) &&
+    !streakFreezeDates.includes(previousDayKey)
+  );
+  const skillBadges = getSkillBadges(recentWorkouts, savedPlans);
+  const levelRewards = getLevelRewards(playerLevel);
+  const achievements = [
+    { title: "First Spark", copy: "Complete one daily challenge", unlocked: completedChallengeDates.length > 0 },
+    { title: "Plan Builder", copy: "Save an AI training plan", unlocked: savedPlans.length > 0 },
+    { title: "Notebook Pro", copy: "Log three workouts", unlocked: recentWorkouts.length >= 3 },
+    { title: "Streak Mode", copy: "Reach a 5-day streak", unlocked: currentStreak >= 5 },
+    { title: "Freeze Ready", copy: "Earn your first streak freeze", unlocked: earnedFreezes > 0 },
+    { title: "Rank Up", copy: "Reach Rotation Player", unlocked: playerLevel >= 3 },
+  ];
 
   const completeDailyChallenge = async () => {
     if (!todayKey || challengeCompletedToday || challengeSaving) return;
@@ -447,6 +642,7 @@ export default function Dashboard() {
         ...user.user_metadata,
         dailyChallenge: {
           completedDates: nextDates,
+          freezeDates: streakFreezeDates,
           lastCompletedAt: new Date().toISOString(),
         },
       },
@@ -454,6 +650,33 @@ export default function Dashboard() {
 
     if (!error) setCompletedChallengeDates(nextDates);
     setChallengeSaving(false);
+  };
+
+  const useStreakFreeze = async () => {
+    if (!canUseFreeze || freezeSaving || !previousDayKey) return;
+
+    setFreezeSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      setFreezeSaving(false);
+      return;
+    }
+
+    const nextFreezeDates = Array.from(new Set([previousDayKey, ...streakFreezeDates])).sort();
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        ...user.user_metadata,
+        dailyChallenge: {
+          completedDates: completedChallengeDates,
+          freezeDates: nextFreezeDates,
+          lastFreezeUsedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    if (!error) setStreakFreezeDates(nextFreezeDates);
+    setFreezeSaving(false);
   };
 
   return (
@@ -605,6 +828,86 @@ export default function Dashboard() {
               </div>
             </header>
 
+            <section className="performance-command-panel">
+              <div className="performance-command-head">
+                <div>
+                  <div className="section-kicker">AI PERFORMANCE TRACKING</div>
+                  <h2>Training intelligence</h2>
+                  <p className="helper">
+                    Your activity, saved plans, and daily challenge rhythm now feed a smarter training snapshot.
+                  </p>
+                </div>
+                <div className="player-level-badge">
+                  <span>{playerRank}</span>
+                  <strong>Level {playerLevel}</strong>
+                  <small>{totalXp} XP</small>
+                </div>
+              </div>
+
+              <div className="performance-command-grid">
+                <div className="performance-score-card">
+                  <div className="performance-score-ring" style={{ ["--score" as string]: `${weeklyProgress}%` }}>
+                    <div>
+                      <strong>{weeklyProgress}</strong>
+                      <span>score</span>
+                    </div>
+                  </div>
+                  <div>
+                    <strong>Performance signal</strong>
+                    <p>
+                      {completedThisWeek >= 4
+                        ? "Strong weekly rhythm. Keep quality high and avoid junk volume."
+                        : "Build the week with one focused session and one recovery note."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="adaptive-plan-card">
+                  <div className="adaptive-plan-top">
+                    <span>ADAPTIVE TRAINING PLAN</span>
+                    <Link href="/plan">Generate</Link>
+                  </div>
+                  <strong>{adaptiveFocus.title}</strong>
+                  <p>{adaptiveFocus.copy}</p>
+                  <div className="adaptive-blocks">
+                    {adaptiveFocus.blocks.map((block) => (
+                      <span key={block}>{block}</span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="progress-dashboard-card">
+                  <div className="progress-metric-row">
+                    <span>Training days</span>
+                    <strong>{trainingDays}</strong>
+                  </div>
+                  <div className="progress-metric-row">
+                    <span>Recent workouts</span>
+                    <strong>{recentWorkouts.length}</strong>
+                  </div>
+                  <div className="progress-metric-row">
+                    <span>Current focus</span>
+                    <strong>{intensityLabel}</strong>
+                  </div>
+                  <div className="level-progress-track">
+                    <span style={{ width: `${levelProgress}%` }} />
+                  </div>
+                  <small className="xp-next-rank">Next: {nextRank}</small>
+                </div>
+
+                <div className="streak-freeze-card">
+                  <div>
+                    <span>STREAK FREEZE</span>
+                    <strong>{availableFreezes} available</strong>
+                    <p>Earn 1 freeze every 5 completed challenges. Use it to protect a missed yesterday.</p>
+                  </div>
+                  <button type="button" onClick={useStreakFreeze} disabled={!canUseFreeze || freezeSaving}>
+                    {freezeSaving ? "Saving..." : canUseFreeze ? "Use freeze" : "No freeze needed"}
+                  </button>
+                </div>
+              </div>
+            </section>
+
             <section className="dashboard-grid">
               <div className="panel dashboard-panel daily-challenge-panel" style={{ display: "grid", gap: 14, padding: "18px 18px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start" }}>
@@ -708,10 +1011,11 @@ export default function Dashboard() {
                 <div className="week-day-strip">
                   {weekDays.map((day) => {
                     const isDone = completedChallengeDates.includes(day.key);
+                    const isFrozen = streakFreezeDates.includes(day.key);
                     const isToday = day.key === todayKey;
 
                     return (
-                      <div key={day.key} className={`week-day-chip${isDone ? " is-done" : ""}${isToday ? " is-today" : ""}`}>
+                      <div key={day.key} className={`week-day-chip${isDone ? " is-done" : ""}${isFrozen ? " is-frozen" : ""}${isToday ? " is-today" : ""}`}>
                         <span>{day.label}</span>
                         <strong>{day.day}</strong>
                       </div>
@@ -948,6 +1252,98 @@ export default function Dashboard() {
                   <span>Shot Arc Lab</span>
                   <strong>High arc. Soft touch. Same release.</strong>
                   <p>Use saved plans to build rhythm, then keep one shooting cue locked for the whole workout.</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="progression-details-panel">
+              <div className="progression-details-head">
+                <div>
+                  <div className="section-kicker">PLAYER PROGRESSION</div>
+                  <h2>Quests, badges, and rewards</h2>
+                </div>
+                <p className="helper">Extra progress details are grouped here so the top dashboard stays focused.</p>
+              </div>
+
+              <div className="progression-details-grid">
+                <div className="weekly-quest-card">
+                  <div className="gamification-title">
+                    <span>WEEKLY QUESTS</span>
+                    <strong>{weeklyQuests.filter((quest) => quest.progress >= quest.target).length}/{weeklyQuests.length}</strong>
+                  </div>
+                  <div className="quest-list">
+                    {weeklyQuests.map((quest) => (
+                      <div key={quest.title}>
+                        <div>
+                          <strong>{quest.title}</strong>
+                          <span>+{quest.xp} XP</span>
+                        </div>
+                        <small>{quest.progress}/{quest.target}</small>
+                        <div className="quest-progress-track">
+                          <span style={{ width: `${Math.min(100, Math.round((quest.progress / quest.target) * 100))}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="skill-badge-card">
+                  <div className="gamification-title">
+                    <span>SKILL BADGES</span>
+                    <strong>{skillBadges.filter((badge) => badge.unlocked).length}/{skillBadges.length}</strong>
+                  </div>
+                  <div className="skill-badge-grid">
+                    {skillBadges.map((badge) => (
+                      <span key={badge.title} className={badge.unlocked ? "is-unlocked" : ""}>
+                        {badge.title}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="level-reward-card">
+                  <div className="gamification-title">
+                    <span>LEVEL REWARDS</span>
+                    <strong>{levelRewards.filter((reward) => reward.unlocked).length}/{levelRewards.length}</strong>
+                  </div>
+                  <div className="reward-list">
+                    {levelRewards.map((reward) => (
+                      <div key={reward.title} className={reward.unlocked ? "is-unlocked" : ""}>
+                        <span>Lv {reward.level}</span>
+                        <strong>{reward.title}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="gamification-card">
+                  <div className="gamification-title">
+                    <span>ACHIEVEMENTS</span>
+                    <strong>{achievements.filter((item) => item.unlocked).length}/{achievements.length}</strong>
+                  </div>
+                  <div className="achievement-grid">
+                    {achievements.map((achievement) => (
+                      <div key={achievement.title} className={achievement.unlocked ? "is-unlocked" : ""}>
+                        <span>{achievement.unlocked ? "OK" : "--"}</span>
+                        <strong>{achievement.title}</strong>
+                        <small>{achievement.copy}</small>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="xp-detail-card">
+                  <div className="gamification-title">
+                    <span>XP BREAKDOWN</span>
+                    <strong>{totalXp}</strong>
+                  </div>
+                  <div className="xp-breakdown">
+                    <span>Challenges +{challengeXp}</span>
+                    <span>Workouts +{workoutXp}</span>
+                    <span>Plans +{planXp}</span>
+                    <span>Streak bonus +{streakBonusXp}</span>
+                    <span>Quest bonus +{questBonusXp}</span>
+                  </div>
                 </div>
               </div>
             </section>

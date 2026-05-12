@@ -34,6 +34,7 @@ The app is built for athletes who want structured basketball development instead
 | Workout Library | Lets users create, edit, and delete their own personal workout entries. |
 | Player Profile | Personalizes AI plans using age, position, level, goal, equipment, and injury notes. |
 | Protected Dashboard | Gives authenticated users a focused training hub. |
+| Progression System | Tracks XP, ranks, weekly quests, streak freezes, skill badges, and level rewards. |
 | Responsive UI | Supports desktop and mobile layouts across landing, dashboard, account, and planner pages. |
 
 ## ✨ Current Features
@@ -43,10 +44,13 @@ The app is built for athletes who want structured basketball development instead
 | Authentication | Built | Email/password signup, login, persistent session handling, and protected routes. |
 | Landing Page | Built | Product-focused marketing page with shared branding and navigation. |
 | Dashboard | Built | Training hub with daily challenge, streaks, weekly progress, saved plans, workout library, and creative basketball cards. |
+| AI Performance Tracking | Built | Dashboard intelligence panel with weekly performance score, XP sources, player rank, training days, and current focus. |
+| Adaptive Training Plans | Built | Dashboard recommends the next training focus from player profile, recent workouts, saved plans, and streak state. |
+| Gamification | Built | XP, ranks, weekly quests, skill badges, level rewards, and streak freezes are integrated into the dashboard experience. |
 | Workout CRUD | Built | Users can add, edit, and delete saved workouts from their own account with a polished responsive UI. |
 | AI Planner | Built | Multi-turn chat interface with saved conversations, rename/delete, markdown output, toast feedback, profile context, and save-as-plan actions. |
 | Saved Training Plans | Built | Users can save AI responses as reusable training plans and reopen/delete them from the dashboard. |
-| Daily Challenge + Streaks | Built | Daily basketball challenges, completion state, streak tracking, and weekly progress are saved to the user account. |
+| Daily Challenge + Streaks | Built | Daily basketball challenges, completion state, streak tracking, streak freezes, and weekly progress are saved to the user account. |
 | Player Profile | Built | Saves player details, shows onboarding/profile completion, and sends profile context to the AI route for personalized recommendations. |
 | Legal Pages | Built | Terms and Privacy pages linked from shared footer navigation. |
 | Basketball Visual System | Built | Basketball background atmosphere, Spin Lab image card, Shot Arc Lab illustration, and polished mobile-first cards. |
@@ -124,7 +128,7 @@ The app currently expects these Supabase tables:
 | `workouts` | `id`, `user_id`, `title`, `description`, `created_at` | Stores user-created workout entries. |
 | `training_plans` | `id`, `user_id`, `source_conversation_id`, `title`, `content`, `status`, `created_at` | Stores AI responses that users save as reusable training plans. |
 
-Player profile data and daily challenge completion history are currently stored in Supabase Auth user metadata.
+Player profile data, daily challenge completion history, and streak freeze usage are currently stored in Supabase Auth user metadata.
 
 Recommended `training_plans` table:
 
@@ -150,6 +154,7 @@ The project currently uses a custom dark visual system with:
 | Navigation | Shared glass-style top bars and reusable footer. |
 | Layout | Shared app shells and responsive page frames. |
 | Dashboard | Card-based training overview with stronger AI generator emphasis. |
+| Progression UI | Performance command panel with centered badges, rank cards, quest progress, and reward states. |
 | Planner | Sidebar + chat workspace with profile context, conversation list, save-as-plan actions, and fixed mobile composer. |
 | Account | Player command center, profile completion ring, onboarding banner, and athlete-specific profile form. |
 | Visual Identity | Basketball atmosphere background, Spin Lab image widget, Shot Arc Lab CSS illustration, glass panels, and cyan/blue accents. |
@@ -173,6 +178,8 @@ These are some of the bigger cleanup steps already completed:
 | Saved AI training plans | Converts useful AI responses into reusable dashboard cards instead of temporary chat output. |
 | Daily challenge and streak tracking | Gives players a reason to return and creates visible training momentum. |
 | Weekly progress tracker | Shows completion percentage, active streak, and completed challenge days. |
+| XP, ranks, quests, and badges | Makes progress feel more rewarding with visible player development milestones. |
+| Streak freezes | Lets users protect momentum after earning freeze credits through consistent challenge completion. |
 | Polished workout CRUD | Makes the manual workout library feel like part of the product instead of a basic form. |
 | Basketball visual polish | Adds a more branded feel with image atmosphere, Spin Lab, and Shot Arc Lab cards. |
 
@@ -199,8 +206,10 @@ The newest development pass focused on turning the MVP into a more complete bask
 | Account settings | Reworked account into a player command center with profile completion and quick actions. | Makes the account page feel more useful and less like a plain settings form. |
 | Saved plans | AI responses can be saved as reusable training plans, reopened, previewed, and deleted from the dashboard. | Turns AI chat output into persistent training assets. |
 | Dashboard engagement | Added Daily Court Challenge, streak tracking, weekly progress, readiness check, coach signal, and focus stack. | Makes the dashboard feel alive and gives users a reason to return. |
+| Progression system | Added XP, ranks, weekly quests, skill badges, level rewards, and streak freezes. | Makes the dashboard feel more game-like and gives players clearer goals. |
+| Adaptive training panel | Added AI-style next-session guidance based on profile, saved plans, workouts, and streak state. | Makes the dashboard more personalized even before opening the AI planner. |
 | Workout library | Added a more professional CRUD experience with polished add form, workout cards, empty states, and responsive layout. | Improves usability and demo quality. |
-| Mobile planner | Reduced bottom spacing, fixed composer behavior, and kept chat messages scrollable without moving the whole page. | Makes the AI page much easier to use on phones. |
+| Mobile planner | Reduced bottom spacing, fixed composer behavior, prevented mobile input zoom, and kept chat messages scrollable without moving the whole page. | Makes the AI page much easier to use on phones. |
 | Visual design | Added basketball image atmosphere, Spin Lab card, Shot Arc Lab illustration, and refined spacing across pages. | Makes the app feel more branded, creative, and basketball-specific. |
 
 The app now behaves less like a simple school CRUD project and more like an early product experience for basketball players.
@@ -279,8 +288,9 @@ Give me a 3-day guard workout plan focused on first-step speed and finishing. I 
 5. Receive a more personalized basketball plan based on both the prompt and the saved profile
 6. Save the AI response as a reusable training plan
 7. Complete the daily challenge and build a streak
-8. Track weekly progress from the dashboard
-9. Save personal workouts separately in the dashboard
+8. Track XP, rank, weekly quests, skill badges, and level rewards from the dashboard
+9. Use earned streak freezes to protect progress
+10. Save personal workouts separately in the dashboard
 
 ## 📌 Current Project Status
 
@@ -294,7 +304,8 @@ This project is currently in a **strong MVP stage**.
 | Saved Training Plans | AI responses can be saved, previewed, opened, and deleted. |
 | Workout Tracking | Polished CRUD workout library. |
 | Daily Challenges | Daily challenge completion and streak state saved to user metadata. |
-| Progress Tracking | Weekly challenge progress and current streak shown in the dashboard. |
+| Progress Tracking | Weekly challenge progress, current streak, XP, rank, quests, badges, and rewards shown in the dashboard. |
+| Gamification | Streak freezes, skill badges, level rewards, and weekly quests are connected to real app activity. |
 | Legal / Trust | Terms and Privacy pages added. |
 | Design System | Shared components, global layout styles, basketball visuals, and responsive cards. |
 | Personalization | Player profile context connected to AI generation. |
@@ -306,6 +317,7 @@ This project is currently in a **strong MVP stage**.
 | Done | First-time onboarding flow | Helps new users complete their profile before using the planner. |
 | Done | Structured saved training plans | Turns AI responses into reusable plans instead of only chat messages. |
 | Done | Progress tracking | Lets players track completed challenges, streaks, and development over time. |
+| Done | Gamification and XP | Adds ranks, quests, badges, rewards, and streak freezes to make training progress more motivating. |
 | Medium | Calendar scheduling | Makes generated workouts easier to follow week by week. |
 | Medium | More reusable UI primitives | Improves consistency and speeds up future development. |
 | Medium | Automated tests | Makes the app harder to break as features grow. |
@@ -316,13 +328,13 @@ This project is currently in a **strong MVP stage**.
 
 If someone asks what this project is today, the short answer is:
 
-> HoopTrainer AI is a modern Next.js basketball training app with Supabase auth and data storage, a Groq-powered AI planner, saved training plans, workout CRUD, daily challenges, streak/progress tracking, responsive dashboard and planner experiences, and a player profile system that personalizes generated plans.
+> HoopTrainer AI is a modern Next.js basketball training app with Supabase auth and data storage, a Groq-powered AI planner, saved training plans, workout CRUD, daily challenges, XP/rank progression, quests, skill badges, streak freezes, responsive dashboard and planner experiences, and a player profile system that personalizes generated plans.
 
 ## Demo Preparation
 
 - Presentation plan: `docs/demo-plan.md`
 - Live demo URL: `https://hoop-trainer-ai.vercel.app`
 - Backup option: run locally with `npm run dev`
-- First professor demo flow prepared: landing page -> login -> player profile -> AI Generator -> save plan -> dashboard -> saved plan modal -> workout library.
-- Demo readiness checks: lint/build, live URL, login, AI generation, saved plans, workout CRUD, responsive layout, Terms, and Privacy pages.
+- First professor demo flow prepared: landing page -> login -> player profile -> AI Generator -> save plan -> dashboard progression -> saved plan modal -> workout library.
+- Demo readiness checks: lint/build, live URL, login, AI generation, saved plans, progression dashboard, workout CRUD, responsive layout, Terms, and Privacy pages.
 - Plan B: localhost demo, existing saved plans/chat history, and screenshots from `public/screenshots/`.

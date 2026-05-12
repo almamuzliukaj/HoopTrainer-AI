@@ -11,3 +11,14 @@ An AuthContext runs `supabase.auth.getSession()` on load and subscribes to `onAu
 - Avoid exposing tokens to frontend scripts when HttpOnly cookies are available.  
 - Validate inputs (email format, password length) and never log credentials.  
 - Protect server-side endpoints even if the frontend blocks unauthenticated access.
+
+## Current Project Update
+
+The authentication layer now supports a larger protected product experience:
+
+- protected dashboard, account, and AI planner pages;
+- player profile stored in Supabase Auth metadata;
+- daily challenge completion and streak freeze data stored in user metadata;
+- user-owned workouts, conversations, messages, and saved training plans stored in Supabase tables.
+
+This makes authentication central to personalization, progress tracking, XP/rank progression, and data isolation.
