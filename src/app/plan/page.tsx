@@ -183,6 +183,14 @@ export default function PlanPage() {
     startNewChatDraft(prompt);
   }
 
+  function settleMobileViewport() {
+    inputRef.current?.blur();
+    window.setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" });
+    }, 120);
+  }
+
   useEffect(() => {
     (async () => {
       setLoadingConvs(true);
@@ -425,7 +433,7 @@ export default function PlanPage() {
       showToast("Error sending message.");
     } finally {
       setSending(false);
-      setTimeout(() => scrollRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 120);
+      settleMobileViewport();
     }
   }
 
@@ -629,8 +637,6 @@ export default function PlanPage() {
     <Protected>
       <Toaster message={toasterMsg} show={toasterShow} onHide={() => setToasterShow(false)} />
 
-      {isSidebarOpen && <div className="planner-overlay" onClick={() => setIsSidebarOpen(false)} />}
-
       {showNewChatModal && (
         <>
           <div className="planner-modal-backdrop" onClick={() => { setShowNewChatModal(false); setNewChatName(""); }} />
@@ -751,6 +757,8 @@ export default function PlanPage() {
           onMenuClick={() => setIsSidebarOpen((current) => !current)}
           isMenuOpen={isSidebarOpen}
         />
+
+        {isSidebarOpen && <div className="planner-overlay" onClick={() => setIsSidebarOpen(false)} />}
 
         <div className="planner-frame" style={{ minHeight: 0 }}>
           <aside className={`planner-sidebar${isSidebarOpen ? " is-open" : ""}`}>
@@ -931,6 +939,7 @@ export default function PlanPage() {
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          z-index: 0;
         }
 
         .planner-topbar {
@@ -1567,7 +1576,7 @@ export default function PlanPage() {
         }
 
         .planner-overlay {
-          z-index: 49;
+          z-index: 40;
           background: rgba(8,13,22,0.34);
         }
 
@@ -1741,7 +1750,7 @@ export default function PlanPage() {
             top: 74px;
             width: min(86vw, 320px);
             height: calc(var(--planner-vvh, 100dvh) - 84px);
-            z-index: 50;
+            z-index: 70;
             transform: translateX(-104%);
             transition: transform 0.24s ease;
           }
@@ -1759,9 +1768,9 @@ export default function PlanPage() {
           }
 
           .planner-shell {
-            height: var(--planner-vvh, 100dvh);
-            min-height: var(--planner-vvh, 100dvh);
-            max-height: var(--planner-vvh, 100dvh);
+            height: 100dvh;
+            min-height: 100dvh;
+            max-height: 100dvh;
             overflow: hidden;
           }
 
@@ -1795,7 +1804,7 @@ export default function PlanPage() {
             flex: 1 1 auto;
             height: auto;
             min-height: 0;
-            margin: 0 auto 6px;
+            margin: 0 auto;
             gap: 0;
             overflow: hidden;
           }
@@ -1874,15 +1883,15 @@ export default function PlanPage() {
           }
 
           .planner-composer-wrap {
-            padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+            padding: 6px 8px calc(5px + env(safe-area-inset-bottom));
             background: rgba(10,15,26,0.98);
             backdrop-filter: blur(12px);
           }
 
           .planner-composer {
-            padding: 9px 10px;
-            border-radius: 16px;
-            min-height: 52px;
+            padding: 7px 9px;
+            border-radius: 15px;
+            min-height: 46px;
           }
 
           .planner-composer-input {
@@ -1892,9 +1901,9 @@ export default function PlanPage() {
           }
 
           .planner-send {
-            width: 38px;
-            height: 38px;
-            flex-basis: 38px;
+            width: 36px;
+            height: 36px;
+            flex-basis: 36px;
           }
 
           .planner-composer-meta {
