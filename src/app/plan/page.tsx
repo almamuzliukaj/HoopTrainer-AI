@@ -157,6 +157,7 @@ export default function PlanPage() {
   const [savingPlanId, setSavingPlanId] = useState<string | null>(null);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatName, setNewChatName] = useState("");
+  const [creatingChat, setCreatingChat] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -181,6 +182,16 @@ export default function PlanPage() {
 
   function handleQuickPrompt(prompt: string) {
     startNewChatDraft(prompt);
+  }
+
+  function openNewChatModal() {
+    setActionMenuId(null);
+    setConfirmDeleteId(null);
+    setIsRenameModal(false);
+    setRenameTargetId(null);
+    setErr(null);
+    setNewChatName("");
+    setShowNewChatModal(true);
   }
 
   function settleMobileViewport() {
@@ -559,13 +570,16 @@ export default function PlanPage() {
   }
 
   async function realAddConversation(name: string) {
+    if (creatingChat) return;
+
     setErr(null);
-    setShowNewChatModal(false);
+    setCreatingChat(true);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setErr("Not logged in!");
       showToast("Not logged in.");
+      setCreatingChat(false);
       return;
     }
 
@@ -578,6 +592,7 @@ export default function PlanPage() {
     if (error) {
       setErr(error.message);
       showToast("Failed to create chat.");
+      setCreatingChat(false);
       return;
     }
 
@@ -585,8 +600,12 @@ export default function PlanPage() {
     setActiveId(data.id);
     setMessages([]);
     setIsSidebarOpen(false);
+    setInput("");
     setNewChatName("");
+    setShowNewChatModal(false);
+    setCreatingChat(false);
     showToast("New chat created.");
+    setTimeout(() => inputRef.current?.focus(), 40);
   }
 
   function renderConversationRow(conversation: Conversation) {
@@ -657,10 +676,20 @@ export default function PlanPage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") realAddConversation(newChatName.trim());
               }}
+              disabled={creatingChat}
             />
             <div className="planner-modal-actions">
-              <button type="button" onClick={() => realAddConversation(newChatName.trim())}>Create</button>
-              <button type="button" className="is-secondary" onClick={() => { setShowNewChatModal(false); setNewChatName(""); }}>Cancel</button>
+              <button type="button" onClick={() => realAddConversation(newChatName.trim())} disabled={creatingChat}>
+                {creatingChat ? "Creating..." : "Create"}
+              </button>
+              <button
+                type="button"
+                className="is-secondary"
+                onClick={() => { setShowNewChatModal(false); setNewChatName(""); }}
+                disabled={creatingChat}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </>
@@ -776,7 +805,7 @@ export default function PlanPage() {
                   {loadingConvs ? "Loading chats..." : `${conversations.length} conversation${conversations.length === 1 ? "" : "s"}`}
                 </div>
               </div>
-              <button type="button" className="planner-new-button" onClick={() => startNewChatDraft()}>
+              <button type="button" className="planner-new-button" onClick={openNewChatModal} disabled={creatingChat}>
                 <span>+</span>
                 New
               </button>

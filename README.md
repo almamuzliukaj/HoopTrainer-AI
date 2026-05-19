@@ -13,6 +13,8 @@
 
 **Live Demo:** [https://hoop-trainer-ai.vercel.app](https://hoop-trainer-ai.vercel.app)
 
+![HoopTrainer AI landing page](public/screenshots/LandingPage.png)
+
 </div>
 
 ---
@@ -24,6 +26,79 @@
 The app is built for athletes who want structured basketball development instead of generic fitness plans. Users can sign in, manage their own workout library, chat with an AI coach, save conversation history, and personalize training plans with a player profile.
 
 > Short version: HoopTrainer AI helps players generate smarter basketball workouts, save their progress, and train with more intent.
+
+## Product Screenshots
+
+HoopTrainer AI includes a polished landing page, protected auth flow, AI planner, player dashboard, saved plan modal, workout CRUD, and account/profile management.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="public/screenshots/LandingPage.png" alt="HoopTrainer AI landing page" />
+      <br />
+      <strong>Landing page</strong>
+      <br />
+      Product overview with basketball-focused branding and demo-ready navigation.
+    </td>
+    <td width="50%">
+      <img src="public/screenshots/AI%20Generator.png" alt="AI Generator chat page" />
+      <br />
+      <strong>AI Generator</strong>
+      <br />
+      Saved chat workspace for generating personalized basketball training plans.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="public/screenshots/Dashboard%201.png" alt="Dashboard overview" />
+      <br />
+      <strong>Dashboard overview</strong>
+      <br />
+      Training command center with progress, saved plans, challenges, and player context.
+    </td>
+    <td width="50%">
+      <img src="public/screenshots/Dashboard%202.png" alt="Dashboard progress section" />
+      <br />
+      <strong>Progress tracking</strong>
+      <br />
+      XP, rank, weekly activity, streaks, quests, and player development signals.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="public/screenshots/Saved%20plan%20modal.png" alt="Saved training plan modal" />
+      <br />
+      <strong>Saved plan modal</strong>
+      <br />
+      Reopen AI-generated training plans from the dashboard for future sessions.
+    </td>
+    <td width="50%">
+      <img src="public/screenshots/CRUD.png" alt="Workout CRUD section" />
+      <br />
+      <strong>Workout library</strong>
+      <br />
+      Add, edit, and delete personal workouts from the authenticated dashboard.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="public/screenshots/Account%20Settings.png" alt="Account settings and player profile" />
+      <br />
+      <strong>Account settings</strong>
+      <br />
+      Player profile setup for position, goals, equipment, level, and AI personalization.
+    </td>
+    <td width="50%">
+      <img src="public/screenshots/Login.png" alt="Login page" />
+      <br />
+      <strong>Authentication</strong>
+      <br />
+      Clean login and signup flow backed by Supabase Auth.
+    </td>
+  </tr>
+</table>
+
+Additional screenshots are available in [`public/screenshots`](public/screenshots), including signup, dashboard detail views, terms, and privacy pages.
 
 ## 🏀 What The Project Does
 
