@@ -13,7 +13,7 @@
 
 **Live Demo:** [https://hoop-trainer-ai.vercel.app](https://hoop-trainer-ai.vercel.app)
 
-![HoopTrainer AI landing page](public/screenshots/LandingPage.png)
+![HoopTrainer AI landing page](public/Screenshots/LandingPage.png)
 
 </div>
 
@@ -34,14 +34,14 @@ HoopTrainer AI includes a polished landing page, protected auth flow, AI planner
 <table>
   <tr>
     <td width="50%">
-      <img src="public/screenshots/LandingPage.png" alt="HoopTrainer AI landing page" />
+      <img src="public/Screenshots/LandingPage.png" alt="HoopTrainer AI landing page" />
       <br />
       <strong>Landing page</strong>
       <br />
       Product overview with basketball-focused branding and demo-ready navigation.
     </td>
     <td width="50%">
-      <img src="public/screenshots/AI%20Generator.png" alt="AI Generator chat page" />
+      <img src="public/Screenshots/AI%20Generator.png" alt="AI Generator chat page" />
       <br />
       <strong>AI Generator</strong>
       <br />
@@ -50,14 +50,14 @@ HoopTrainer AI includes a polished landing page, protected auth flow, AI planner
   </tr>
   <tr>
     <td width="50%">
-      <img src="public/screenshots/Dashboard%201.png" alt="Dashboard overview" />
+      <img src="public/Screenshots/Dashboard%201.png" alt="Dashboard overview" />
       <br />
       <strong>Dashboard overview</strong>
       <br />
       Training command center with progress, saved plans, challenges, and player context.
     </td>
     <td width="50%">
-      <img src="public/screenshots/Dashboard%202.png" alt="Dashboard progress section" />
+      <img src="public/Screenshots/Dashboard%202.png" alt="Dashboard progress section" />
       <br />
       <strong>Progress tracking</strong>
       <br />
@@ -66,14 +66,14 @@ HoopTrainer AI includes a polished landing page, protected auth flow, AI planner
   </tr>
   <tr>
     <td width="50%">
-      <img src="public/screenshots/Saved%20plan%20modal.png" alt="Saved training plan modal" />
+      <img src="public/Screenshots/Saved%20plan%20modal.png" alt="Saved training plan modal" />
       <br />
       <strong>Saved plan modal</strong>
       <br />
       Reopen AI-generated training plans from the dashboard for future sessions.
     </td>
     <td width="50%">
-      <img src="public/screenshots/CRUD.png" alt="Workout CRUD section" />
+      <img src="public/Screenshots/CRUD.png" alt="Workout CRUD section" />
       <br />
       <strong>Workout library</strong>
       <br />
@@ -82,14 +82,14 @@ HoopTrainer AI includes a polished landing page, protected auth flow, AI planner
   </tr>
   <tr>
     <td width="50%">
-      <img src="public/screenshots/Account%20Settings.png" alt="Account settings and player profile" />
+      <img src="public/Screenshots/Account%20Settings.png" alt="Account settings and player profile" />
       <br />
       <strong>Account settings</strong>
       <br />
       Player profile setup for position, goals, equipment, level, and AI personalization.
     </td>
     <td width="50%">
-      <img src="public/screenshots/Login.png" alt="Login page" />
+      <img src="public/Screenshots/Login.png" alt="Login page" />
       <br />
       <strong>Authentication</strong>
       <br />
@@ -98,7 +98,7 @@ HoopTrainer AI includes a polished landing page, protected auth flow, AI planner
   </tr>
 </table>
 
-Additional screenshots are available in [`public/screenshots`](public/screenshots), including signup, dashboard detail views, terms, and privacy pages.
+Additional screenshots are available in [`public/Screenshots`](public/Screenshots), including signup, dashboard detail views, terms, and privacy pages.
 
 ## 🏀 What The Project Does
 
@@ -412,4 +412,4 @@ If someone asks what this project is today, the short answer is:
 - Backup option: run locally with `npm run dev`
 - First professor demo flow prepared: landing page -> login -> player profile -> AI Generator -> save plan -> dashboard progression -> saved plan modal -> workout library.
 - Demo readiness checks: lint/build, live URL, login, AI generation, saved plans, progression dashboard, workout CRUD, responsive layout, Terms, and Privacy pages.
-- Plan B: localhost demo, existing saved plans/chat history, and screenshots from `public/screenshots/`.
+- Plan B: localhost demo, existing saved plans/chat history, and screenshots from `public/Screenshots/`.
